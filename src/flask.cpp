@@ -868,7 +868,7 @@ int main (int argc, char *argv[]) {
   long *ThreadNgals, Ngalaxies, kl, Ncells, PartialNgal, longNz;  
   pointing ang;
   int ziter, fiter;
-  std::string CatalogHeader;
+  std::string CatalogItems, CatalogHeader;
   int theta_pos, phi_pos, z_pos, r_pos, galtype_pos, kappa_pos, gamma1_pos, gamma2_pos, 
     ellip1_pos, ellip2_pos, pixel_pos, maskbit_pos, ra_pos, dec_pos;
 
@@ -899,32 +899,33 @@ int main (int argc, char *argv[]) {
   if (Ngalaxies>INT_MAX) warning("flask: catalogue generation not tested for this amount of galaxies");
   
   // Using transposed catalog (catalog[col][row]), better for FITS outputting:
-  CatalogHeader = config.reads("CATALOG_COLS");
-  ncols         = CountWords(CatalogHeader);
+  CatalogItems  = config.reads("CATALOG_COLS");
+  CatalogHeader = config.reads("CAT_COL_NAMES");
+  ncols         = CountWords(CatalogItems);
   catalog       = matrix<CAT_PRECISION>(0,ncols-1, 0,Ngalaxies-1); 
   catSet        = matrix<char>         (0,ncols-1, 0,Ngalaxies-1);
   for (kl=0; kl<Ngalaxies; kl++) for (j=0; j<ncols; j++) catSet[j][kl]=0;
   
   // Find position of entries according to catalog header:
-  theta_pos    = GetSubstrPos("theta"  , CatalogHeader); 
-  phi_pos      = GetSubstrPos("phi"    , CatalogHeader);
-  ra_pos       = GetSubstrPos("ra"     , CatalogHeader); 
-  dec_pos      = GetSubstrPos("dec"    , CatalogHeader);
-  z_pos        = GetSubstrPos("z"      , CatalogHeader);  
-  r_pos        = GetSubstrPos("r"      , CatalogHeader);  
-  galtype_pos  = GetSubstrPos("galtype", CatalogHeader);  
-  kappa_pos    = GetSubstrPos("kappa"  , CatalogHeader);  
-  gamma1_pos   = GetSubstrPos("gamma1" , CatalogHeader);  
-  gamma2_pos   = GetSubstrPos("gamma2" , CatalogHeader);  
-  ellip1_pos   = GetSubstrPos("ellip1" , CatalogHeader);  
-  ellip2_pos   = GetSubstrPos("ellip2" , CatalogHeader);  
-  pixel_pos    = GetSubstrPos("pixel"  , CatalogHeader); 
-  maskbit_pos  = GetSubstrPos("maskbit", CatalogHeader);
+  theta_pos    = GetSubstrPos("theta"  , CatalogItems); 
+  phi_pos      = GetSubstrPos("phi"    , CatalogItems);
+  ra_pos       = GetSubstrPos("ra"     , CatalogItems); 
+  dec_pos      = GetSubstrPos("dec"    , CatalogItems);
+  z_pos        = GetSubstrPos("z"      , CatalogItems);  
+  r_pos        = GetSubstrPos("r"      , CatalogItems);  
+  galtype_pos  = GetSubstrPos("galtype", CatalogItems);  
+  kappa_pos    = GetSubstrPos("kappa"  , CatalogItems);  
+  gamma1_pos   = GetSubstrPos("gamma1" , CatalogItems);  
+  gamma2_pos   = GetSubstrPos("gamma2" , CatalogItems);  
+  ellip1_pos   = GetSubstrPos("ellip1" , CatalogItems);  
+  ellip2_pos   = GetSubstrPos("ellip2" , CatalogItems);  
+  pixel_pos    = GetSubstrPos("pixel"  , CatalogItems); 
+  maskbit_pos  = GetSubstrPos("maskbit", CatalogItems);
 
   // Allow Change of Coordinates if RA and DEC were set as catalog columns:
   // For the catalog, ra, dec, theta, phi in CATALOG_COLS overrides ANGULAR_COORD. 
   AngularCoord = config.readi("ANGULAR_COORD");
-  OrganizeAngularCoord(&AngularCoord, &phi_pos, &theta_pos, &ra_pos, &dec_pos, CatalogHeader);
+  OrganizeAngularCoord(&AngularCoord, &phi_pos, &theta_pos, &ra_pos, &dec_pos, CatalogItems);
 
   // Warning against multiple or none lensing fields at the same redshift:
   //k=0;

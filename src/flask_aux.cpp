@@ -180,7 +180,7 @@ void ChangeCoord(CAT_PRECISION **catalog, int theta_pos, int phi_pos, long Ngala
 }
 
 bool ComputeShearQ(const ParameterList & config) {
-  std::string CatalogHeader, ExitAt;
+  std::string CatalogItems, CatalogHeader, ExitAt;
   
   // Only check if output is required if code does not stop before them:
   ExitAt = config.reads("EXIT_AT");
@@ -199,11 +199,11 @@ bool ComputeShearQ(const ParameterList & config) {
     if (config.reads("ELLIPFITS_PREFIX")  !="0") return 1;
     // Compute shear if it goes into catalog:
     if (ExitAt=="CATALOG_OUT" || ExitAt=="0") {
-      CatalogHeader = config.reads("CATALOG_COLS");
-      if (GetSubstrPos("gamma1" , CatalogHeader) != -1) return 1;
-      if (GetSubstrPos("gamma2" , CatalogHeader) != -1) return 1;
-      if (GetSubstrPos("ellip1" , CatalogHeader) != -1) return 1;
-      if (GetSubstrPos("ellip2" , CatalogHeader) != -1) return 1;
+      CatalogItems = config.reads("CATALOG_COLS");
+      if (GetSubstrPos("gamma1" , CatalogItems) != -1) return 1;
+      if (GetSubstrPos("gamma2" , CatalogItems) != -1) return 1;
+      if (GetSubstrPos("ellip1" , CatalogItems) != -1) return 1;
+      if (GetSubstrPos("ellip2" , CatalogItems) != -1) return 1;
     }
   } // End of IF stop code before shear output.
 
