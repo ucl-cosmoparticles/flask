@@ -868,7 +868,7 @@ int main (int argc, char *argv[]) {
   long *ThreadNgals, Ngalaxies, kl, Ncells, PartialNgal, longNz;  
   pointing ang;
   int ziter, fiter;
-  std::string CatalogItems, CatalogHeader;
+  std::string CatalogItems, CatalogHeader;   //For catalog.dat
   int theta_pos, phi_pos, z_pos, r_pos, galtype_pos, kappa_pos, gamma1_pos, gamma2_pos, 
     ellip1_pos, ellip2_pos, pixel_pos, maskbit_pos, ra_pos, dec_pos;
 
