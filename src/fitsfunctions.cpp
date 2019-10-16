@@ -10,8 +10,8 @@
 int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config) {
   const int COLNAMELENGTH=20;
   fitsfile *fpointer;
-  std::stringstream ss;
-  std::string header, word;
+  std::stringstream ss, ss2, ss3;
+  std::string colwrite, header, word, word2, word3;
   char **columnNames, **columnTypes, **columnUnits;
   int status=0, Ncols, i, datatype, *integer, fits_precision;
   long j;
@@ -21,16 +21,16 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
   integer = vector<int>(0, Nentries-1);
 
   // Get number of columns:
-  header      = config.reads("CATALOG_COLS");
-  Ncols       = CountWords(header);
+  colwrite    = config.reads("CATALOG_COLS");
+  Ncols       = CountWords(colwrite);
   // Reaname 'theta' and 'phi' to 'dec' and 'ra' if change of coords. was requested:
   if (config.readi("ANGULAR_COORD")==2) {
-    StrReplace(header, "theta", "dec");
-    StrReplace(header, "phi", "ra");
+    StrReplace(colwrite, "theta", "dec");
+    StrReplace(colwrite, "phi", "ra");
   }
-  // Get column names:
+  // Get internal variable names of the columns to be written in the catalog:
   columnNames = matrix<char>(0,Ncols, 0,COLNAMELENGTH);
-  ss << header;
+  ss << colwrite;
   for(i=0; i<Ncols; i++) { ss >> word; strcpy(columnNames[i], word.c_str()); } 
   
   // Set column formats and units:
@@ -55,23 +55,32 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
       warning("WriteCatalog2Fits: unknown catalog column "+word.assign(columnNames[i]));}  
   }
 
+  // Get names to be assigned to each of the columns for external output into the FITS file:
+  header      = config.reads("CAT_COL_NAMES");
+  ss2 << header;
+  for(i=0; i<Ncols; i++) { ss2 >> word2; strcpy(columnNames[i], word2.c_str()); }
+
   // Create (or overwrite) FITS file with ASCII table:
   fits_create_file(&fpointer, ("!"+filename).c_str(), &status);
   fits_report_error(stderr, status);
-  fits_create_tbl(fpointer, ASCII_TBL, Nentries, Ncols, columnNames, columnTypes, columnUnits, TableName, &status);
+  fits_create_tbl(fpointer, ASCII_TBL, Nentries, Ncols, columnNames, columnTypes, columnUnits, TableName, &status);  //This also prints out the header line in FITS file
   fits_report_error(stderr, status);
   
+  //Once the custom column names are written out to the FITS file, need to revert back to the internal variable names to identify the columns, so that the correct numbers get printed:
+  ss3 << colwrite;
+  for(i=0; i<Ncols; i++) { ss3 >> word3; strcpy(columnNames[i], word3.c_str()); }
+
 
   // Write columns to FITS file ASCII table:
   for(i=0; i<Ncols; i++) {
     // Write double variable:
     if (columnTypes[i][0] == 'F' || columnTypes[i][0] == 'E' || columnTypes[i][0] == 'D') {
-      fits_write_col(fpointer, FIT_PRECISION, i+1, 1, 0, Nentries, table[i], &status);
+      fits_write_col(fpointer, FIT_PRECISION, i+1, 1, 0, Nentries, table[i], &status);        //This writes out numerical values in columns
     }
     // Write int variable:
     else if (columnTypes[i][0] == 'I') {
       for(j=0; j<Nentries; j++) integer[j]=(int)table[i][j];
-      fits_write_col(fpointer, TINT, i+1, 1, 0, Nentries, integer, &status);
+      fits_write_col(fpointer, TINT, i+1, 1, 0, Nentries, integer, &status);                  //This writes out numerical values in columns
     }
     else error("WriteCatalog2Fits: "+word.assign(columnNames[i])+" has uknown FITS format.");
     // Verify if everything is OK:
