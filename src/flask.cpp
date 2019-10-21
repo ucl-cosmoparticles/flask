@@ -50,6 +50,7 @@ int main (int argc, char *argv[]) {
   long long1, long2;
   double *expmu, gvar, gvarl, esig;
   gsl_set_error_handler_off();          // !!! All GSL return messages MUST be checked !!!
+  std::string config_file_name;          //JB//
 
   
   /**********************************************/
@@ -72,6 +73,7 @@ int main (int argc, char *argv[]) {
 
   // Loading config file:
   if (argc<=1) { cout << "You must supply a config file." << endl; return 0;}
+  config_file_name = argv[1];
   config.load(argv[1]);
   cout << endl;
   cout << "-- Configuration setup:\n";
@@ -868,7 +870,7 @@ int main (int argc, char *argv[]) {
   long *ThreadNgals, Ngalaxies, kl, Ncells, PartialNgal, longNz;  
   pointing ang;
   int ziter, fiter;
-  std::string CatalogItems, CatalogHeader;   //For catalog.dat
+  std::string CatalogItems, CatalogHeader;   //JB//For catalog.dat
   int theta_pos, phi_pos, z_pos, r_pos, galtype_pos, kappa_pos, gamma1_pos, gamma2_pos, 
     ellip1_pos, ellip2_pos, pixel_pos, maskbit_pos, ra_pos, dec_pos;
 
@@ -900,7 +902,9 @@ int main (int argc, char *argv[]) {
   
   // Using transposed catalog (catalog[col][row]), better for FITS outputting:
   CatalogItems  = config.reads("CATALOG_COLS");
-  CatalogHeader = config.reads("CAT_COL_NAMES");
+  CatalogHeader = CatalogItems;                   //JB// The default header if a custom header is not present
+  if (stringexist(config_file_name, "CAT_COL_NAMES")) CatalogHeader = config.reads("CAT_COL_NAMES"); //JB//
+  
   ncols         = CountWords(CatalogItems);
   catalog       = matrix<CAT_PRECISION>(0,ncols-1, 0,Ngalaxies-1); 
   catSet        = matrix<char>         (0,ncols-1, 0,Ngalaxies-1);
@@ -1033,7 +1037,7 @@ int main (int argc, char *argv[]) {
       break;
       // FITS file:
     case fits_format: 
-      WriteCatalog2Fits(filename, catalog, Ngalaxies, config);
+      WriteCatalog2Fits(filename, catalog, Ngalaxies, config, CatalogHeader);
       cout << ">> Catalog written to " << filename << endl;
       break;
       // Unknown: 
@@ -1047,7 +1051,7 @@ int main (int argc, char *argv[]) {
     }
   }  
   free_matrix(catalog, 0,ncols-1, 0,Ngalaxies-1);
-  
+
 
   // End of the program
   PrepareEnd(StartAll); return 0;

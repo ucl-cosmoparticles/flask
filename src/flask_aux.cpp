@@ -725,3 +725,4 @@ void test_fzij (int N1, int N2) {
 
   free_matrix(IsSet,0,N1*N2-1,0,N1*N2-1);
 }
+

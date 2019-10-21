@@ -7,7 +7,7 @@
 // The definition below will be changed by make and the result will be written to a new file:
 #define HEALPIX_DATA "/path/to/healpix/dir/data"
 
-int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config) {
+int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config, std::string headerline) {
   const int COLNAMELENGTH=20;
   fitsfile *fpointer;
   std::stringstream ss, ss2, ss3;
@@ -56,8 +56,7 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
   }
 
   // Get names to be assigned to each of the columns for external output into the FITS file:
-  header      = config.reads("CAT_COL_NAMES");
-  ss2 << header;
+  ss2 << headerline;
   for(i=0; i<Ncols; i++) { ss2 >> word2; strcpy(columnNames[i], word2.c_str()); }
 
   // Create (or overwrite) FITS file with ASCII table:
