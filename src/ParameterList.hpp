@@ -15,7 +15,7 @@ The 'npars' variable must be set to the number of parameters in the
 #ifndef PARLIST_H    // include guard.
 #define PARLIST_H 1
 
-#define STRSIZE 110
+#define STRSIZE 1100
 
 #include <string>
 #include <iostream>
