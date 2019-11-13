@@ -36,22 +36,24 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
   // Set column formats and units:
   columnTypes = matrix<char>(0,Ncols, 0,6);
   columnUnits = matrix<char>(0,Ncols, 0,COLNAMELENGTH);
+
+  // This is for Binary tables:
   for(i=0; i<Ncols; i++) { 
     // theta phi z galtype kappa gamma1 gamma2 ellip1 ellip2 pixel maskbit
-    if      (strcmp(columnNames[i],"theta"  )==0) {sprintf(columnTypes[i],"%s", "F9.5" ); sprintf(columnUnits[i],"%s", "Radians");}
-    else if (strcmp(columnNames[i],"phi"    )==0) {sprintf(columnTypes[i],"%s", "F9.5" ); sprintf(columnUnits[i],"%s", "Radians");}
-    else if (strcmp(columnNames[i],"ra"     )==0) {sprintf(columnTypes[i],"%s", "F9.5" ); sprintf(columnUnits[i],"%s", "Degrees");}
-    else if (strcmp(columnNames[i],"dec"    )==0) {sprintf(columnTypes[i],"%s", "F9.5" ); sprintf(columnUnits[i],"%s", "Degrees");}
-    else if (strcmp(columnNames[i],"z"      )==0) {sprintf(columnTypes[i],"%s", "F8.5" ); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"galtype")==0) {sprintf(columnTypes[i],"%s", "I3"   ); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"kappa"  )==0) {sprintf(columnTypes[i],"%s", "E12.5"); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"gamma1" )==0) {sprintf(columnTypes[i],"%s", "E12.5"); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"gamma2" )==0) {sprintf(columnTypes[i],"%s", "E12.5"); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"ellip1" )==0) {sprintf(columnTypes[i],"%s", "E12.5"); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"ellip2" )==0) {sprintf(columnTypes[i],"%s", "E12.5"); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"pixel"  )==0) {sprintf(columnTypes[i],"%s", "I9"   ); sprintf(columnUnits[i],"%s", "\0");}
-    else if (strcmp(columnNames[i],"maskbit")==0) {sprintf(columnTypes[i],"%s", "I2"   ); sprintf(columnUnits[i],"%s", "\0");}
-    else                                          {sprintf(columnTypes[i],"%s", "E12.5"); sprintf(columnUnits[i],"%s", "unknown"); 
+    if      (strcmp(columnNames[i],"theta"  )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
+    else if (strcmp(columnNames[i],"phi"    )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
+    else if (strcmp(columnNames[i],"ra"     )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
+    else if (strcmp(columnNames[i],"dec"    )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
+    else if (strcmp(columnNames[i],"z"      )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+    else if (strcmp(columnNames[i],"galtype")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
+    else if (strcmp(columnNames[i],"kappa"  )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+    else if (strcmp(columnNames[i],"gamma1" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+    else if (strcmp(columnNames[i],"gamma2" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+    else if (strcmp(columnNames[i],"ellip1" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+    else if (strcmp(columnNames[i],"ellip2" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+    else if (strcmp(columnNames[i],"pixel"  )==0) {sprintf(columnTypes[i],"%s", "1J"); sprintf(columnUnits[i],"%s", "\0");}       // signed 32-bit integer
+    else if (strcmp(columnNames[i],"maskbit")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
+    else                                          {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "unknown");   // 64-bit floating point
       warning("WriteCatalog2Fits: unknown catalog column "+word.assign(columnNames[i]));}  
   }
 
@@ -62,30 +64,30 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
   // Create (or overwrite) FITS file with ASCII table:
   fits_create_file(&fpointer, ("!"+filename).c_str(), &status);
   fits_report_error(stderr, status);
-  fits_create_tbl(fpointer, ASCII_TBL, Nentries, Ncols, columnNames, columnTypes, columnUnits, TableName, &status);  //This also prints out the header line in FITS file
+  fits_create_tbl(fpointer, BINARY_TBL, Nentries, Ncols, columnNames, columnTypes, columnUnits, TableName, &status);  //This also prints out the header line in FITS file
   fits_report_error(stderr, status);
-  
+
   //Once the custom column names are written out to the FITS file, need to revert back to the internal variable names to identify the columns, so that the correct numbers get printed:
   ss3 << colwrite;
   for(i=0; i<Ncols; i++) { ss3 >> word3; strcpy(columnNames[i], word3.c_str()); }
 
-
-  // Write columns to FITS file ASCII table:
+  // Write columns to FITS file ASCII/binary table:
   for(i=0; i<Ncols; i++) {
+  //for(i=1; i<=Ncols; i++) {
     // Write double variable:
-    if (columnTypes[i][0] == 'F' || columnTypes[i][0] == 'E' || columnTypes[i][0] == 'D') {
-      fits_write_col(fpointer, FIT_PRECISION, i+1, 1, 0, Nentries, table[i], &status);        //This writes out numerical values in columns
+    if (columnTypes[i][1] == 'D' || columnTypes[i][1] == 'E') {
+      fits_write_col(fpointer, FIT_PRECISION, i+1, 1, 1, Nentries, table[i], &status);        //This writes out numerical values in columns
     }
     // Write int variable:
-    else if (columnTypes[i][0] == 'I') {
+    else if (columnTypes[i][1] == 'I' || columnTypes[i][1] == 'J' || columnTypes[i][1] == 'K') {
       for(j=0; j<Nentries; j++) integer[j]=(int)table[i][j];
-      fits_write_col(fpointer, TINT, i+1, 1, 0, Nentries, integer, &status);                  //This writes out numerical values in columns
+      fits_write_col(fpointer, TINT, i+1, 1, 1, Nentries, integer, &status);                  //This writes out numerical values in columns
     }
     else error("WriteCatalog2Fits: "+word.assign(columnNames[i])+" has uknown FITS format.");
     // Verify if everything is OK:
     fits_report_error(stderr, status);
   }
-  
+
   // Do not need columns info anymore:
   free_matrix(columnNames, 0,Ncols, 0,COLNAMELENGTH);
   free_matrix(columnTypes, 0,Ncols, 0,6);

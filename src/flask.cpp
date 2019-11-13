@@ -50,7 +50,7 @@ int main (int argc, char *argv[]) {
   long long1, long2;
   double *expmu, gvar, gvarl, esig;
   gsl_set_error_handler_off();          // !!! All GSL return messages MUST be checked !!!
-  std::string config_file_name;          //JB//
+  std::string config_file_name;
 
   
   /**********************************************/
@@ -870,7 +870,7 @@ int main (int argc, char *argv[]) {
   long *ThreadNgals, Ngalaxies, kl, Ncells, PartialNgal, longNz;  
   pointing ang;
   int ziter, fiter;
-  std::string CatalogItems, CatalogHeader;   //JB//For catalog.dat
+  std::string CatalogItems, CatalogHeader;   //For catalog.dat
   int theta_pos, phi_pos, z_pos, r_pos, galtype_pos, kappa_pos, gamma1_pos, gamma2_pos, 
     ellip1_pos, ellip2_pos, pixel_pos, maskbit_pos, ra_pos, dec_pos;
 
@@ -902,8 +902,8 @@ int main (int argc, char *argv[]) {
   
   // Using transposed catalog (catalog[col][row]), better for FITS outputting:
   CatalogItems  = config.reads("CATALOG_COLS");
-  CatalogHeader = CatalogItems;                   //JB// The default header if a custom header is not present
-  if (stringexist(config_file_name, "CAT_COL_NAMES")) CatalogHeader = config.reads("CAT_COL_NAMES"); //JB//
+  CatalogHeader = CatalogItems;                   //The default header if a custom header is not present
+  if (stringexist(config_file_name, "CAT_COL_NAMES:")) CatalogHeader = config.reads("CAT_COL_NAMES");
   
   ncols         = CountWords(CatalogItems);
   catalog       = matrix<CAT_PRECISION>(0,ncols-1, 0,Ngalaxies-1); 
