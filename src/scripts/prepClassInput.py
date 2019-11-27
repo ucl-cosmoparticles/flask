@@ -159,7 +159,7 @@ for i in range(1, ncols):
     classout[i] = classout[i]*factor
     
     # Export
-    print "Writing file "+outfiles[i]
+    print("Writing file ", outfiles[i])
     np.savetxt(outfiles[i], np.transpose([l,classout[i]]), fmt=['%d','%e'])
 
-print "Done."
+print("Done.")
