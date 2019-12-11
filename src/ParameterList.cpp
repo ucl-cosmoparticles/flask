@@ -40,7 +40,7 @@ int ParameterList::findpar (std::string word) const {
 // Returns int value of parameter (at pos if array).
 int ParameterList::readi(int index, int pos) const {
   using namespace ParDef;
-  char message[50];
+  char message[100];
   bool flag_noElement=0;
   switch (list[index].type) {
   case i1:
@@ -77,7 +77,7 @@ int ParameterList::readi(std::string name, int pos) const {
 // Returns double value of parameter (at pos if array).
 double ParameterList::readd(int index, int pos) const {
   using namespace ParDef;
-  char message[50];
+  char message[100];
   bool flag_noElement=0;
   switch (list[index].type) {
   case d1:
@@ -114,7 +114,7 @@ double ParameterList::readd(std::string name, int pos) const {
 // Returns char value of parameter.
 char ParameterList::readc(int index, int pos) const {
   using namespace ParDef;
-  char message[50];
+  char message[100];
   bool flag_noElement=0;
   switch (list[index].type) {
   case c:
@@ -163,7 +163,7 @@ std::string ParameterList::reads(std::string name) const {
 // Copy parameter int value to int variable.
 void ParameterList::copy (int index, long *value) const {
   using namespace ParDef;
-  char message[50];
+  char message[100];
   if (index >=npars) // Error in case index does not exist.
     {sprintf(message,"ParameterList::copy<id,int>: unkown index %d.",index); error (message);}
   switch (list[index].type) {
@@ -192,7 +192,7 @@ void ParameterList::copy (std::string name, long *value) const {
 // Copy parameter double value to double variable.
 void ParameterList::copy (int index, double *value) const {
   using namespace ParDef;
-  char message[50]; 
+  char message[100]; 
   if (index >=npars) // Error in case index does not exist.
     {sprintf(message,"ParameterList::copy<id,double>: unkown index %d.",index); error (message);}
   switch (list[index].type) {
@@ -223,7 +223,7 @@ void ParameterList::copy (std::string name, double *value) const {
 // Copy parameter char value to char variable.
 void ParameterList::copy (int index, char *value) const {
   using namespace ParDef;
-  char message[50]; 
+  char message[100]; 
   if (index >=npars) // Error in case index does not exist.
     {sprintf(message,"ParameterList::copy<id,char>: unkown index %d.",index); error (message);} 
   switch (list[index].type) {

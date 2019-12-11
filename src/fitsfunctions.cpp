@@ -7,7 +7,7 @@
 // The definition below will be changed by make and the result will be written to a new file:
 #define HEALPIX_DATA "/path/to/healpix/dir/data"
 
-int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config, std::string headerline) {
+int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config, std::string headerline, bool float32bit) {
   const int COLNAMELENGTH=20;
   fitsfile *fpointer;
   std::stringstream ss, ss2, ss3;
@@ -38,23 +38,45 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
   columnUnits = matrix<char>(0,Ncols, 0,COLNAMELENGTH);
 
   // This is for Binary tables:
-  for(i=0; i<Ncols; i++) { 
-    // theta phi z galtype kappa gamma1 gamma2 ellip1 ellip2 pixel maskbit
-    if      (strcmp(columnNames[i],"theta"  )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
-    else if (strcmp(columnNames[i],"phi"    )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
-    else if (strcmp(columnNames[i],"ra"     )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
-    else if (strcmp(columnNames[i],"dec"    )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
-    else if (strcmp(columnNames[i],"z"      )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
-    else if (strcmp(columnNames[i],"galtype")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
-    else if (strcmp(columnNames[i],"kappa"  )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
-    else if (strcmp(columnNames[i],"gamma1" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
-    else if (strcmp(columnNames[i],"gamma2" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
-    else if (strcmp(columnNames[i],"ellip1" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
-    else if (strcmp(columnNames[i],"ellip2" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
-    else if (strcmp(columnNames[i],"pixel"  )==0) {sprintf(columnTypes[i],"%s", "1J"); sprintf(columnUnits[i],"%s", "\0");}       // signed 32-bit integer
-    else if (strcmp(columnNames[i],"maskbit")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
-    else                                          {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "unknown");   // 64-bit floating point
-      warning("WriteCatalog2Fits: unknown catalog column "+word.assign(columnNames[i]));}  
+  if (float32bit) {                        //If 32-bit floating point number option has been chosen by the user
+    for(i=0; i<Ncols; i++) { 
+      // theta phi z galtype kappa gamma1 gamma2 ellip1 ellip2 pixel maskbit
+      if      (strcmp(columnNames[i],"theta"  )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"phi"    )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"ra"     )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"dec"    )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"z"      )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"galtype")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
+      else if (strcmp(columnNames[i],"kappa"  )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"gamma1" )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"gamma2" )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"ellip1" )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"ellip2" )==0) {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"pixel"  )==0) {sprintf(columnTypes[i],"%s", "1J"); sprintf(columnUnits[i],"%s", "\0");}       // signed 32-bit integer
+      else if (strcmp(columnNames[i],"maskbit")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
+      else                                          {sprintf(columnTypes[i],"%s", "1E"); sprintf(columnUnits[i],"%s", "unknown");   // 64-bit floating point
+        warning("WriteCatalog2Fits: unknown catalog column "+word.assign(columnNames[i]));}  
+    }
+  }
+  else {                                   //By default we write the floating point numbers in 64-bits
+    for(i=0; i<Ncols; i++) { 
+      // theta phi z galtype kappa gamma1 gamma2 ellip1 ellip2 pixel maskbit
+      if      (strcmp(columnNames[i],"theta"  )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"phi"    )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Radians");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"ra"     )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"dec"    )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "Degrees");}  // 64-bit floating point
+      else if (strcmp(columnNames[i],"z"      )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"galtype")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
+      else if (strcmp(columnNames[i],"kappa"  )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"gamma1" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"gamma2" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"ellip1" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"ellip2" )==0) {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "\0");}       // 64-bit floating point
+      else if (strcmp(columnNames[i],"pixel"  )==0) {sprintf(columnTypes[i],"%s", "1J"); sprintf(columnUnits[i],"%s", "\0");}       // signed 32-bit integer
+      else if (strcmp(columnNames[i],"maskbit")==0) {sprintf(columnTypes[i],"%s", "1I"); sprintf(columnUnits[i],"%s", "\0");}       // signed 16-bit integer
+      else                                          {sprintf(columnTypes[i],"%s", "1D"); sprintf(columnUnits[i],"%s", "unknown");   // 64-bit floating point
+        warning("WriteCatalog2Fits: unknown catalog column "+word.assign(columnNames[i]));}  
+    }
   }
 
   // Get names to be assigned to each of the columns for external output into the FITS file:

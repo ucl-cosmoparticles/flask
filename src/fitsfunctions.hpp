@@ -5,7 +5,7 @@
 #include "ParameterList.hpp"
 #include <arr.h>
  
-int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config, std::string headerline);
+int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config, std::string headerline, bool float32bit);
 int ReadHealpixData(int col, const ParameterList & config, double *weights, int datatype);
 
 #endif

@@ -871,6 +871,7 @@ int main (int argc, char *argv[]) {
   pointing ang;
   int ziter, fiter;
   std::string CatalogItems, CatalogHeader;   //For catalog.dat
+  bool float32bit = false;                   //For binary-format catalogue
   int theta_pos, phi_pos, z_pos, r_pos, galtype_pos, kappa_pos, gamma1_pos, gamma2_pos, 
     ellip1_pos, ellip2_pos, pixel_pos, maskbit_pos, ra_pos, dec_pos;
 
@@ -902,9 +903,14 @@ int main (int argc, char *argv[]) {
   
   // Using transposed catalog (catalog[col][row]), better for FITS outputting:
   CatalogItems  = config.reads("CATALOG_COLS");
-  CatalogHeader = CatalogItems;                   //The default header if a custom header is not present
+  CatalogHeader = CatalogItems;                   // The default header if a custom header is not present
   if (stringexist(config_file_name, "CAT_COL_NAMES:")) CatalogHeader = config.reads("CAT_COL_NAMES");
-  
+
+  //Decide if the floating point numbers to be written in the catalogue are to be in 64-bit (default) or 32-bit format:
+  if (stringexist(config_file_name, "CAT32BIT:")) {        // Check if the keyword for overriding the 64-bit floating point output in binary FITS catalogue exists in the config file
+    if (config.readi("CAT32BIT")==1) float32bit = true;    // If it exists, read its value and decide whether 32-bit floating points are to be written in the binary catalogue
+  }
+
   ncols         = CountWords(CatalogItems);
   catalog       = matrix<CAT_PRECISION>(0,ncols-1, 0,Ngalaxies-1); 
   catSet        = matrix<char>         (0,ncols-1, 0,Ngalaxies-1);
@@ -1037,7 +1043,7 @@ int main (int argc, char *argv[]) {
       break;
       // FITS file:
     case fits_format: 
-      WriteCatalog2Fits(filename, catalog, Ngalaxies, config, CatalogHeader);
+      WriteCatalog2Fits(filename, catalog, Ngalaxies, config, CatalogHeader, float32bit);
       cout << ">> Catalog written to " << filename << endl;
       break;
       // Unknown: 
