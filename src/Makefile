@@ -26,6 +26,19 @@ LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
 #CXXGSL   = -I/path/to/gsl/headers/folder
 #LDGSL    = -L/path/to/gsl/libraries/folder
 
+# Options for SDC-UK
+ifeq ($(HOSTNAME), sdc-uk.roe.ac.uk)
+HEALDIR  = /home/loureiro/software/Healpix_3.31
+HEALDATA = $(HEALDIR)/data
+CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
+LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
+CXXFITS  = -I/usr/include/cfitsio/
+LDFITS   = -L/usr/lib64
+CXXGSL   = -I/home/loureiro/lib/include/gsl
+LDGSL    = -L/home/loureiro/lib/lib
+endif
+
+
 # Options for gina:
 ifeq ($(HOSTNAME), gina.iag.usp.br)
 HEALDIR  =  /sto/home/hsxavier/prog/Healpix_3.31
@@ -77,7 +90,7 @@ USEFFTPACK  := $(shell echo "$(HEALVERSION) < 3.50" | bc) # Set to 1 if Healpix 
 ifeq ($(USEFFTPACK), 1)
 FFTFLAG = -lfftpack
 else
-FFTFLAG = -lpocketfft
+FFTFLAG = -lfftpack #or -lpocketfft
 endif
 # Get code version:
 FLASKCOMMIT := $(shell git rev-parse --short HEAD)

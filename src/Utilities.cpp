@@ -325,7 +325,7 @@ bool stringexist(std::string file_name, std::string check_string) {
   using std::ifstream;
   std::string line;
   bool found = false;
-  ifstream filestream(file_name);
+  ifstream filestream(file_name.c_str());
 
   //index = findpar(name+":");
 
