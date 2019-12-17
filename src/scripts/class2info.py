@@ -18,7 +18,7 @@ ones are commented).
 Written by: Henrique S. Xavier, hsxavier@if.usp.br, 08/jul/2015.
 """
 
-
+from __future__ import division, print_function
 import sys
 import numpy as np
 
