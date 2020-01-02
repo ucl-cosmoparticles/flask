@@ -61,11 +61,9 @@ CXXFITS  = -I/home/rosenfel/FLASK/cfitsio/include
 LDFITS   = -L/home/rosenfel/FLASK/cfitsio/lib
 endif
 
-
 # Options for Splinter computer:
 ifeq ($(HOSTNAME), splinter-login.local)
-#HEALDIR  = /home/hsxavier/Healpix_3.11
-HEALDIR  = /share/splinter/cosmos/modules/may_2017/install_dir/Healpix_3.31
+HEALDIR  = /share/splinter/cosmos/modules/may_2019/install_dir/Healpix_3.50
 HEALDATA = $(HEALDIR)/data
 CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
 LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
@@ -90,7 +88,7 @@ USEFFTPACK  := $(shell echo "$(HEALVERSION) < 3.50" | bc) # Set to 1 if Healpix 
 ifeq ($(USEFFTPACK), 1)
 FFTFLAG = -lfftpack
 else
-FFTFLAG = -lfftpack #or -lpocketfft
+FFTFLAG = -lpocketfft
 endif
 # Get code version:
 FLASKCOMMIT := $(shell git rev-parse --short HEAD)
