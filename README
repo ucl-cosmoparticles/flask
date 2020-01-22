@@ -1,2 +1,28 @@
 Check the file 'doc/flask_manual.pdf' for all the information about FLASK.
 Paper describing the code: Xavier et al. 2016, MNRAS Vol. 459, p. 3693 (arXiv:1602.08503)
+
+
+How to compile:
+==============
+Edit the Makefile in the src/ directory according to your machine's requirements.
+In particular, the HEALDIR variable must be set to the location of Healpix installation on your machine.
+The variable PYWRAPLIB1 must be set to the location of the C++ header files relevant to Python on your machine.
+
+From Linux command prompt:
+$ cd <Root directory of Flask>/src/
+$ make
+
+How to run the standard example:
+===============================
+
+Flask
+-----
+$ cd <Root directory of Flask>/
+$ bin/flask example.config
+
+pyFlask
+-------
+$ cd <Root directory of Flask>/
+$ python3
+>>> from py import pyFlask
+>>> pyFlask.flask(["flask","example.config"])
