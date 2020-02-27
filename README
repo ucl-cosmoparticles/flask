@@ -1,16 +1,34 @@
 Check the file 'doc/flask_manual.pdf' for all the information about FLASK.
 Paper describing the code: Xavier et al. 2016, MNRAS Vol. 459, p. 3693 (arXiv:1602.08503)
 
+Prerequisites:
+=============
+FLASK requires the following software to be pre-installed on your machine:
+- Linux operating system
+- OpenMP (for parallelisation)
+- HEALPix (for mapping the sky)
+- GNU Scientific Library (GSL)
+- CFITSIO (to work with FITS format files)
 
 How to compile:
 ==============
-Edit the Makefile in the src/ directory according to your machine's requirements.
+Edit the Makefile in the src/ subdirectory according to your machine's requirements.
 In particular, the HEALDIR variable must be set to the location of Healpix installation on your machine.
 The variable PYWRAPLIB1 must be set to the location of the C++ header files relevant to Python on your machine.
 
 From Linux command prompt:
 $ cd <Root directory of Flask>/src/
 $ make
+
+This will create...
+(a)
+A linux binary that can be run directly from the command prompt. 
+It will be placed in the subdirectory that is defined through the variable BIN in the Makefile.
+This is referred to as "Flask".
+(b) 
+A Python shared object, so that FLASK can be invoked from within Python as a Python module. 
+It will be placed in the subdirectory that is defined through the variable PYF in the Makefile. 
+This is referred to as "pyFlask".
 
 How to run the standard example:
 ===============================
