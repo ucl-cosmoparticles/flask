@@ -39,7 +39,7 @@ int GetSubstrPos(const std::string field, const std::string header);
 void CatalogFill(CAT_PRECISION **catalog, long row, int column, double value, char **catSet);
 void CatalogFill(CAT_PRECISION **catalog, long row, int column, double value);
 void Kappa2ShearEmode(Alm<xcomplex <ALM_PRECISION> > &Elm, Alm<xcomplex <ALM_PRECISION> > &Klm);
-void GenEllip(gsl_rng *r, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2);
+void GenEllip(gsl_rng *r, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2, bool use_shear);
 pointing RandAngInPix(gsl_rng *r, const Healpix_Map<MAP_PRECISION> & map, int pixel);
 pointing randang(gsl_rng *r, double thetamin, double thetamax, double phimin, double phimax);
 pointing xyz2ang(const vec3 & cartesian);

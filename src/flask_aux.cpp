@@ -535,15 +535,17 @@ void Kappa2ShearEmode(Alm<xcomplex <ALM_PRECISION> > &Elm, Alm<xcomplex <ALM_PRE
 
 
 // Generates galaxy ellipticity from shear and convergence, including random source ellipticity:
-void GenEllip(gsl_rng *rnd, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2) {
+void GenEllip(gsl_rng *rnd, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2, bool use_shear) {
   std::complex<double> g, epsSrc, eps, k, one, gamma;
 
   // Set complex numbers:
   gamma.real(gamma1); gamma.imag(gamma2);
   k.real(kappa);      k.imag(0.0);
   one.real(1.0);      one.imag(0.0);
+
   // Compute reduced shear:
   g = gamma/(one-k);
+
   // Generate source intrinsic ellipticity:
   if (sigma>0.0) {
     epsSrc.real(gsl_ran_gaussian(rnd, sigma));
@@ -555,7 +557,8 @@ void GenEllip(gsl_rng *rnd, double sigma, double kappa, double gamma1, double ga
   }
   // Compute ellipticity of the image:
   if (norm(g) <= 1.0) {
-    eps = (epsSrc+g) / (one + conj(g)*epsSrc);
+    if (use_shear==1) {eps = (epsSrc + gamma);}                 // If shear is to be used
+    else {eps = (epsSrc+g) / (one + conj(g)*epsSrc);}           // If reduced shear is to be used
   }
   else {
     eps = (one + g*conj(epsSrc))/(conj(epsSrc)+conj(g));

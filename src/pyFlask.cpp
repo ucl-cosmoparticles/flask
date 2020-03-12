@@ -51,8 +51,9 @@ int flask (int argc, char *argv[]) {
   double *expmu, gvar, gvarl, esig;
   gsl_set_error_handler_off();          // !!! All GSL return messages MUST be checked !!!
   std::string config_file_name;
+  bool use_redu_shear, use_shear;
 
- 
+  
   /**********************************************/
   /*** PART 0: Test code and load config file ***/
   /**********************************************/
@@ -637,6 +638,7 @@ int flask (int argc, char *argv[]) {
   
   SelectionFunction selection;
   MAP_PRECISION maskval;
+  double shearopt1, shearopt2;
 
   // Read in selection functions from FITS files and possibly text files (for radial part):
   Announce("Reading selection functions from files... ");
@@ -766,6 +768,13 @@ int flask (int argc, char *argv[]) {
   
   /*** Ellipticity fields ***/
   
+  // Read from the CONFIG file whether shear or reduced shear is to be used for calculating the observed ellipticities:
+  use_redu_shear = true; use_shear = false;                     // Default values
+  if (stringexist(config_file_name, "REDUCED_SHEAR:")) {        // Check if the keyword for reduced shear exists in the config file
+    if (config.readi("REDUCED_SHEAR")==1) {use_redu_shear = true; use_shear = false;}    // If it exists, read its value and decide whether shear or reduced shear is to be used
+    else if (config.readi("REDUCED_SHEAR")==0) {use_redu_shear = false; use_shear = true;}
+  }
+
   if (config.reads("ELLIP_MAP_OUT")!="0" || config.reads("ELLIPFITS_PREFIX")!="0") {
     Healpix_Map <MAP_PRECISION> *e1Mapf, *e2Mapf;
     e1Mapf = vector<Healpix_Map <MAP_PRECISION> >(0,Nfields-1);
@@ -796,14 +805,23 @@ int flask (int argc, char *argv[]) {
 	      if (mapf[i][m]<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
 	      // If galaxies are present, average ellipticity in pixel is the reduced shear plus the average of the error:
 	      else {
-		if (esig>0.0) {
-		  e1Mapf[i][m] = gamma1f[j][m]/(1.0-mapf[j][m]) + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
-		  e2Mapf[i][m] = gamma2f[j][m]/(1.0-mapf[j][m]) + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
-		}
-		else {
-		  e1Mapf[i][m] = gamma1f[j][m]/(1.0-mapf[j][m]);
-		  e2Mapf[i][m] = gamma2f[j][m]/(1.0-mapf[j][m]);
-		}
+            if (use_shear==1) {
+                               shearopt1 = gamma1f[j][m];
+                               shearopt2 = gamma2f[j][m];
+                              }
+            else{
+                               shearopt1 = gamma1f[j][m]/(1.0-mapf[j][m]);
+                               shearopt2 = gamma2f[j][m]/(1.0-mapf[j][m]);
+                              }
+
+            if (esig>0.0) {
+              e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
+              e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
+            }
+            else {
+              e1Mapf[i][m] = shearopt1;
+              e2Mapf[i][m] = shearopt2;
+            }
 	      }
 	    }
 	    Announce();
@@ -829,14 +847,23 @@ int flask (int argc, char *argv[]) {
 	    if (selection(i,m)<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
 	    // In unmasked regions, average ellipticity in pixel is the reduced shear plus the average of the error:
 	    else {
-	      if (esig>0.0) {
-		e1Mapf[i][m] = gamma1f[i][m]/(1.0-mapf[i][m]) + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
-		e2Mapf[i][m] = gamma2f[i][m]/(1.0-mapf[i][m]) + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
-	      }
-	      else {
-		e1Mapf[i][m] = gamma1f[i][m]/(1.0-mapf[i][m]);
-		e2Mapf[i][m] = gamma2f[i][m]/(1.0-mapf[i][m]);
-	      }
+          if (use_shear==1) {
+                             shearopt1 = gamma1f[i][m];
+                             shearopt2 = gamma2f[i][m];
+                            }
+          else{
+                             shearopt1 = gamma1f[i][m]/(1.0-mapf[i][m]);
+                             shearopt2 = gamma2f[i][m]/(1.0-mapf[i][m]);
+                            }
+
+          if (esig>0.0) {
+            e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
+            e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
+          }
+          else {
+            e1Mapf[i][m] = shearopt1;
+            e2Mapf[i][m] = shearopt2;
+          }
 	    }
 	  }
 	  Announce();
@@ -989,7 +1016,7 @@ int flask (int argc, char *argv[]) {
       else if (fieldlist.ftype(i)==flensing) for (m=0; m<cellNgal; m++) {
 	  CatalogFill  (catalog, ThreadNgals[l]+PartialNgal+m, kappa_pos , mapf[i][j]   , catSet);
 	  if (yesShear==1) {
-	    if (ellip1_pos!=-1 || ellip2_pos!=-1) GenEllip(rnd[l+1], esig, mapf[i][j], gamma1f[i][j], gamma2f[i][j], &ellip1, &ellip2);
+	    if (ellip1_pos!=-1 || ellip2_pos!=-1) GenEllip(rnd[l+1], esig, mapf[i][j], gamma1f[i][j], gamma2f[i][j], &ellip1, &ellip2, use_shear);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, gamma1_pos, gamma1f[i][j], catSet);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, gamma2_pos, gamma2f[i][j], catSet);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, ellip1_pos, ellip1       , catSet);

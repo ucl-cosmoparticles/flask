@@ -86,6 +86,7 @@ int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries
   // Create (or overwrite) FITS file with ASCII table:
   fits_create_file(&fpointer, ("!"+filename).c_str(), &status);
   fits_report_error(stderr, status);
+  //fits_create_tbl(fpointer, ASCII_TBL, Nentries, Ncols, columnNames, columnTypes, columnUnits, TableName, &status);  //This also prints out the header line in FITS file
   fits_create_tbl(fpointer, BINARY_TBL, Nentries, Ncols, columnNames, columnTypes, columnUnits, TableName, &status);  //This also prints out the header line in FITS file
   fits_report_error(stderr, status);
 

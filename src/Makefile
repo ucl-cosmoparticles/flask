@@ -45,6 +45,7 @@ CXXFITS  = -I/usr/include/cfitsio/
 LDFITS   = -L/usr/lib64
 CXXGSL   = -I/home/loureiro/lib/include/gsl
 LDGSL    = -L/home/loureiro/lib/lib
+PYWRAPLIB1 = -I/usr/include/python3.6m
 endif
 
 
