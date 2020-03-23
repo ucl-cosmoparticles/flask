@@ -536,7 +536,9 @@ void Kappa2ShearEmode(Alm<xcomplex <ALM_PRECISION> > &Elm, Alm<xcomplex <ALM_PRE
 
 // Generates galaxy ellipticity from shear and convergence, including random source ellipticity:
 void GenEllip(gsl_rng *rnd, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2, bool use_shear) {
+               using std::cout; using std::endl; using std::cin;                     // Basic stuff.
   std::complex<double> g, epsSrc, eps, k, one, gamma;
+  double epsmag;
 
   // Set complex numbers:
   gamma.real(gamma1); gamma.imag(gamma2);
@@ -548,9 +550,24 @@ void GenEllip(gsl_rng *rnd, double sigma, double kappa, double gamma1, double ga
 
   // Generate source intrinsic ellipticity:
   if (sigma>0.0) {
-    epsSrc.real(gsl_ran_gaussian(rnd, sigma));
-    epsSrc.imag(gsl_ran_gaussian(rnd, sigma));
-   }
+    // If shear is being used, we are going to limit ourselves to the ellipticity formula for the case of abs(g)<1.
+    // We then assume that the maximum value of shear (gamma) that can be encountered is 0.1.
+    // Hence, we allow intrinsic elipticity (epsSrc = epsilon_s) to be only up to 0.9.
+    if (use_shear==1) {
+      epsmag = 1.0;         //Initial dummy value of the magnitude of intrinsic elipticity
+      while (epsmag > 0.9) {
+        epsSrc.real(gsl_ran_gaussian(rnd, sigma));
+        epsSrc.imag(gsl_ran_gaussian(rnd, sigma));
+        epsmag = std::abs(epsSrc);
+      }
+
+    }
+    // If reduced shear is being used, then we are free to generate any random value for the intrinsic ellipticity:
+    else {
+      epsSrc.real(gsl_ran_gaussian(rnd, sigma));
+      epsSrc.imag(gsl_ran_gaussian(rnd, sigma));
+    }
+  }
   else {
     epsSrc.real(0.0);
     epsSrc.imag(0.0);
