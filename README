@@ -33,14 +33,27 @@ This is referred to as "pyFlask".
 How to run the standard example:
 ===============================
 
-Flask
------
+Suppose:
+BIN=<Root directory of Flask>/bin
+PYF=<Root directory of Flask>/py
+
+To run Flask
+------------
 $ cd <Root directory of Flask>/
 $ bin/flask example.config
 
-pyFlask
--------
+If you want to define, for example, the input parameter RNDSEED=402 at the command prompt, then Flask should be run from the command prompt as:
+
+$ bin/flask example.config RNDSEED: 402
+
+To run pyFlask
+--------------
 $ cd <Root directory of Flask>/
 $ python3
 >>> from py import pyFlask
 >>> pyFlask.flask(["flask","example.config"])
+
+If you want to define, for example, the input parameter RNDSEED=402 from within Python environment, then pyFlask should be invoked from Python as:
+
+>>> pyFlask.flask(["flask","example.ini","RNDSEED:","402"])
+
