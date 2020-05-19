@@ -25,6 +25,7 @@
 #include "FieldsDatabase.hpp"
 #include <unistd.h> // debugging
 #include <ctime> // For timing full code run with StartAll.
+#include "ini_config.hpp"
 
 #define RAND_OFFSET 10000000  // For generating random numbers in parallel, add multiples of this to seed.
 
@@ -72,13 +73,56 @@ int flask (int argc, char *argv[]) {
   cout << "Max. # of threads:  " << MaxThreads  << endl;
   if (MaxThreads>210) warning("flask: # of threads too big, may mess parallel random number generator.");
 
-  // Loading config file:
-  if (argc<=1) { cout << "You must supply a config file." << endl; return 0;}
+  // Make sure a config/ini file is supplied:
+  if (argc<=1) { cout << "You must supply a config or ini file as the first command line argument." << endl; return 0;}
+
+// =============================================================
+// Deal with the input parameter file format.
+// -----------------------------------------
+  std::string binname = argv[0];             //The name of the executable file (this program)
+  std::string para_file_name = argv[1];      //The name of the input parameter file.
+
+  //Make sure only a .config or a .ini file is provided as input:
+  if(para_file_name.substr(para_file_name.find_last_of(".") + 1) != "ini" && 
+    para_file_name.substr(para_file_name.find_last_of(".") + 1) != "config") {
+      cout << "Only input filenames with .config or .ini extensions can be processed." << endl; return 0;
+  }
+
+  //If the input file type is .ini then convert it to .cfg format.
+  //This also includes creation of any new directory names encountered in the .ini file.
+  if(para_file_name.substr(para_file_name.find_last_of(".") + 1) == "ini") {
+    cout << " " << endl;
+    cout << "Input parameter file appears to be a .ini file" << endl;
+    cout << "Converting it to config (.cfg) format" << endl;
+    cout << " " << endl;
+
+    //Create a corresponding config (.cfg) file:
+    ini_to_config(binname, para_file_name);
+
+    // Now replace the argv[1] element with the new (directory + input filename) combination...
+    strcpy(argv[1], config_dir_and_file.c_str());
+  }                                           //Close the option applicable to .ini file
+
+  //If the input file type is .config then create any new directory names mentioned in it.
+  if(para_file_name.substr(para_file_name.find_last_of(".") + 1) == "config") {
+    cout << " " << endl;
+    cout << "Input parameter file appears to be a .config file" << endl;
+    cout << " " << endl;
+
+    config_mkdir(para_file_name);
+  }                                           //Close the option applicable to .config file
+
+  cout << "Input parameter file that Flask is going to work with internally: " << argv[1] << endl;
+  cout << " " << endl;
+// =============================================================
+
+
   config_file_name = argv[1];
   config.load(argv[1]);
+  //config.load(config_file_name.c_str());
   cout << endl;
   cout << "-- Configuration setup:\n";
-  cout << "   File: "<<argv[1]<<endl;
+  cout << "   File: "<<config_file_name<<endl;
   config.lineload(argc, argv);
   config.show();
   cout << endl;
@@ -803,25 +847,26 @@ int flask (int argc, char *argv[]) {
 	      k = omp_get_thread_num()+1;
 	      // Mask ellipticity map at galaxy-free pixels:
 	      if (mapf[i][m]<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
+
 	      // If galaxies are present, average ellipticity in pixel is the reduced shear plus the average of the error:
 	      else {
-            if (use_shear==1) {
-                               shearopt1 = gamma1f[j][m];
-                               shearopt2 = gamma2f[j][m];
-                              }
-            else{
-                               shearopt1 = gamma1f[j][m]/(1.0-mapf[j][m]);
-                               shearopt2 = gamma2f[j][m]/(1.0-mapf[j][m]);
-                              }
+          if (use_shear==1) {
+                             shearopt1 = gamma1f[j][m];
+                             shearopt2 = gamma2f[j][m];
+                            }
+          else{
+                             shearopt1 = gamma1f[j][m]/(1.0-mapf[j][m]);
+                             shearopt2 = gamma2f[j][m]/(1.0-mapf[j][m]);
+                            }
 
-            if (esig>0.0) {
-              e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
-              e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
-            }
-            else {
-              e1Mapf[i][m] = shearopt1;
-              e2Mapf[i][m] = shearopt2;
-            }
+	        if (esig>0.0) {
+		        e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
+		        e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
+          }
+          else {
+            e1Mapf[i][m] = shearopt1;
+            e2Mapf[i][m] = shearopt2;
+          }
 	      }
 	    }
 	    Announce();
@@ -847,23 +892,23 @@ int flask (int argc, char *argv[]) {
 	    if (selection(i,m)<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
 	    // In unmasked regions, average ellipticity in pixel is the reduced shear plus the average of the error:
 	    else {
-          if (use_shear==1) {
-                             shearopt1 = gamma1f[i][m];
-                             shearopt2 = gamma2f[i][m];
-                            }
-          else{
-                             shearopt1 = gamma1f[i][m]/(1.0-mapf[i][m]);
-                             shearopt2 = gamma2f[i][m]/(1.0-mapf[i][m]);
-                            }
+        if (use_shear==1) {
+                           shearopt1 = gamma1f[i][m];
+                           shearopt2 = gamma2f[i][m];
+                          }
+        else{
+                           shearopt1 = gamma1f[i][m]/(1.0-mapf[i][m]);
+                           shearopt2 = gamma2f[i][m]/(1.0-mapf[i][m]);
+                          }
 
-          if (esig>0.0) {
-            e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
-            e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
-          }
-          else {
-            e1Mapf[i][m] = shearopt1;
-            e2Mapf[i][m] = shearopt2;
-          }
+        if (esig>0.0) {
+          e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
+          e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
+        }
+        else {
+          e1Mapf[i][m] = shearopt1;
+          e2Mapf[i][m] = shearopt2;
+        }
 	    }
 	  }
 	  Announce();

@@ -3621,6 +3621,8 @@ SWIG_From_unsigned_SS_long_SS_long  (unsigned long long value)
 #include "../src/lognormal.hpp"
 #include "../src/FieldsDatabase.hpp"
 #include "../src/Spline.hpp"
+/* #include "../src/ini_config.hpp" */
+/* #include "../src/handle_ini_format.hpp" */
 
 int flask (int argc, char *argv[]);
 
