@@ -77,7 +77,7 @@
 {\Huge \sffamily \bfseries FLASK:\vspace{0.5cm}\linebreak 
 Full-sky Lognormal Astro-fields Simulation Kit}\\
 \vspace{1cm}
-\includegraphics[width=0.6\textwidth]{flask_logo.eps}\\
+\includegraphics[width=0.4\textwidth]{flask_logo.eps}\\
 \vspace{1cm}
 {\LARGE \sffamily Usage and installation manual}
 \end{center}
@@ -86,11 +86,16 @@ Full-sky Lognormal Astro-fields Simulation Kit}\\
 \begin{minipage}[c][1\totalheight][t]{9 cm}
 \lyxline{\normalsize}
 \vspace{0.2cm}
-\textbf{Written by:} Henrique S. Xavier\\
-\textbf{Contact:} {\tt hsxavier@if.usp.br}\\
-\linebreak
-University College London, UK\\
-Universidade de S\~{a}o Paulo, Brazil
+\textbf{Written by:}\\
+
+Henrique S. Xavier$^{\star,\dag}$\\
+{\tt hsxavier@if.usp.br}\\
+
+Jayesh S. Bhatt$^{\star}$\\
+{\tt bhatt@physics.org}\\
+
+$^\star$University College London, UK\\
+$^\dag$Universidade de S\~{a}o Paulo, Brazil
 \vspace{0.2cm}
 \lyxline{\normalsize}
 \end{minipage}
@@ -112,21 +117,11 @@ Universidade de S\~{a}o Paulo, Brazil
 \chapter{Disclaimer}
 \label{sec:disclaimer}
 
-   {\sc flask} is free software, written by Henrique S. Xavier; 
-   you can redistribute it and/or modify it under the terms of the GNU 
-   General Public License as published by the Free Software Foundation; 
-   either version 2 of the License, or (at your option) any later version.
+{\sc flask} is free software, written by Henrique S. Xavier; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
-   {\sc flask} is distributed in the hope that it will be useful,
-   but without any warranty; without even the implied warranty of
-   merchantability or fitness for a particular purpose. See the
-   GNU General Public License for more details. You should have received 
-   a copy of the GNU General Public License along with {\sc flask}; if not, 
-   write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, 
-   Boston, MA  02111-1307  USA.
+{\sc flask} is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with {\sc flask}; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-   Thank you for using this software. Please report any bugs to {\tt hsxavier@if.usp.br} and
-   acknowledge {\sc flask} by citing the publication \citet{Xavier16mn}.
+Thank you for using this software. Please report any bugs to {\tt hsxavier@if.usp.br} and acknowledge {\sc flask} by citing the publication \citet{Xavier16mn}.
    
 
 \chapter{Installation}
@@ -140,22 +135,29 @@ Universidade de S\~{a}o Paulo, Brazil
 mapping the sky and performing harmonic transforms; the Gnu Scientific 
 Library\footnote{{\tt \href{http://www.gnu.org/software/gsl}{http://www.gnu.org/software/gsl}}} 
 ({\sc GSL}) to generate pseudo-random numbers, to perform Cholesky decompositions and other tasks; and the 
-{\sc cfitsio}\footnote{{\tt \href{http://heasarc.gsfc.nasa.gov/fitsio}{http://heasarc.gsfc.nasa.gov/fitsio}}} 
-library to input and output FITS files. Apart from {\sc healpix}, all the remaining dependencies should 
+{\sc cfitsio}\footnote{{\tt \href{http://heasarc.gsfc.nasa.gov/fitsio}{http://heasarc.gsfc.nasa.gov/fitsio}}} library to input and output FITS files. Apart from {\sc healpix}, all the remaining dependencies should 
 be available on Linux and Mac repositories. {\sc Healpix} however should be easy to install (just 
-follow their instructions); {\sc Flask} requires version 3.11 or later of the C++ {\sc healpix} 
-implementation due to the {\tt T\_Healpix\_Base<I>::boundaries} function, introduced in version 3.11. 
+follow their instructions); {\sc Flask} requires version 3.11 or later of the C++ {\sc healpix} implementation due to the {\tt T\_Healpix\_Base<I>::boundaries} function, introduced in version 3.11. 
 {\sc Flask} has been fully operational under {\sc healpix} versions 3.11, 3.20 and (since January 2017) 3.31.
 
-So far {\sc Flask} has been tested only on Linux distributions -- Scientific Linux 5.6 and Ubuntu 14.04 -- 
-and compiled with {\tt g++} (GCC) versions 4.4.7, 4.8.1 and 4.8.4.   
-Besides the main code and other routines in {\sc C++}, {\sc flask} also includes auxiliary {\sc python} 
-and {\sc shell} scripts. These were tested in {\sc bash} shell and {\sc python} versions 2.7.3 and 2.7.6. 
-The {\sc python} scripts require a few packages like {\sc numpy}, {\sc scipy} and {\sc healpy} 
+In addition, the package comes with a Python wrapper, called {\sc pyFlask}, so that it can be invoked from a Python like other Python modules. For this to work, Python must also be installed on your machine.
+
+So far {\sc Flask} has been tested only on Linux distributions -- Scientific Linux 5.6, Ubuntu 14.04 and Ubuntu 18.04 -- 
+and compiled with {\tt g++} (GCC) versions 4.4.7, 4.8.1, 4.8.4 and 7.5.0. {\sc pyFlask} has been tested with Python 3.6, although it should work just as well with Python 2 with the appropriate modification in the Makefile (see Section \ref{sec:compiling}).
+
+In addition to the above, {\sc flask} also includes auxiliary Python and {\sc shell} scripts. These were tested in {\sc bash} shell and Python versions 2.7.3 and 2.7.6. The Python scripts require a few packages like {\sc numpy}, {\sc scipy} and {\sc healpy} 
 (which can be installed by following {\sc healpix} instructions). Check the scripts for further dependencies.  
 
 \section{Compiling}
 \label{sec:compiling}
+
+\begin{enumerate}
+
+\item {\bf Pick the relevant Makefile.}
+
+There are two types of Makefiles bundled with {\sc Flask}. The file \texttt{Makefile-cpp-and-python} compiles and builds both, a Linux binary through the C++ compiler as well as {\sc pyFlask}. The file \texttt{Makefile-cpp-only} skips building the Python wrapper and only builds a simple Linux executable for {\sc Flask}. The default is \texttt{Makefile-cpp-and-python} and in the following description we shall assume the user is choosing this Makefile.
+
+\item {\bf Modify the Makefile as necessary.}
 
 Before compiling, you will have to modify the {\tt Makefile} in the {\tt src} sub-directory of {\sc flask}. 
 The following lines must be changed according to the location of the {\sc healpix} installation directory:
@@ -170,6 +172,9 @@ The following lines must be changed according to the location of the {\sc healpi
 
 \noindent
 {\tt LDHEAL  = -L<path to Healpix library files>} 
+
+\noindent
+{\tt PYWRAPLIB1  = -I<path to Python development package header files>} 
 \vspace{0.5cm}
 
 \noindent
@@ -179,10 +184,22 @@ you might need to specify their locations with similar compiler flags (i.e. {\tt
 {\tt Makefile} is {\tt g++}, you might need to change the keyword {\tt COMP} as well if using a 
 different compiler.
 
-After changing the {\tt Makefile}, run the command {\tt make} in the {\tt src} directory. The 
-executables will be built in {\sc flask} {\tt bin} sub-directory. You may add this sub-directory to 
-your {\sc path} environment variable in order to be able to run {\sc flask} anywhere; otherwise, 
-you will require to run it from there or to provide the full path as usual. 
+\item {\bf Build the executable/module.}
+
+After modifying the {\tt Makefile}, copy it as `Makefile' and run the command {\tt make} in the {\tt src} directory. For example:
+
+\texttt{
+    \\
+    \$ cd <Root directory of Flask>/src/ \\
+    \$ cp Makefile-cpp-and-python Makefile \\
+    \$ make
+}
+
+The C++ built executable will be placed in the subdirectory that is defined through the variable \texttt{BIN} in the Makefile. In addition, a Python shared object will be placed in the subdirectory that is defined through the variable \texttt{PYF} in the Makefile, so that {\sc pyFlask} can be invoked from within Python as a Python module. 
+
+You may add these sub-directories to your {\sc path} environment variable in order to be able to run {\sc Flask}, or invoke {\sc pyFlask}, anywhere; otherwise, you will require to run it, or import the {\sc pyFlask} module, from these subdirectories or to provide the full path as usual. 
+
+\end{enumerate}
 
 
 \chapter{Usage}
@@ -199,7 +216,7 @@ directory and run the command:
 
 \vspace{0.5cm}
 \noindent
-{\tt ./bin/flask example.config}
+{\tt \$ ./bin/flask example.config}
 \vspace{0.5cm}
 
 \noindent
@@ -212,15 +229,42 @@ this run will take much longer than an usual {\sc flask} run that only outputs o
 To figure out what the output files are, check the file {\tt example.config} and Sec. 
 \ref{sec:keywords}.
  
+\subsection{Configuration file formats}
+\label{sec:FileFormats}
+
+Basic control parameters for running {\sc Flask} or {pyFlask} are input through a configuration (ASCII text) file. This file can be in either the {\tt .config} or the {\tt .ini} format. A standard example in both these formats is bundled with this software to help the user. In the above example, this file is {\tt example.config}. This example could as well be run with the {\tt .ini} format input file:
+
+\noindent
+{\\ \tt \$ ./bin/flask example.ini \\}
+
+Similarly, in the following discussion, examples are given with the {\tt .config} file format; however, the use of a {\tt .ini} file in those examples would be equally be valid. 
+
+If the configuration file provided by the user is in the {\tt .ini} format, a corresponding file in the {\tt .config} format will be created by {\sc Flask} in the same directory as where the {\tt .ini} file resides. The filename extension of this newly created file will, however, be {\tt .cfg} in order to avoid overwriting any `real' {\tt .config} file with a similar name that the user may have placed there. For example, if the standard example is run with the file {\tt example.ini} as above, a file named {\tt example.cfg} will be automatically created.
+
+A Python script is included to convert from the {\tt .config} format to the {\tt .ini} format (Section \ref{sec:config_to_ini}).
+
 \subsection{Basic operation}
 \label{sec:operation}
+
+Here we assume the variables \texttt{BIN} and \texttt{PYF} have the following values in the Makefile:
+
+\texttt{
+    \\
+    BIN=<Root directory of Flask>/bin \\
+    PYF=<Root directory of Flask>/py
+}
+
+\subsubsection{To run Flask}
+\label{sec:runFlask}
 
 {\sc Flask} is executed through the command line, and it always requires a configuration file 
 (e.g. {\tt example.config} in the {\sc flask} directory):
 
-\vspace{0.5cm}
-\noindent
-{\tt flask <config file>}
+\texttt{
+    \\
+    \$ cd <Root directory of Flask>/ \\
+    \$ ./bin/flask <configuration file>
+}
 \vspace{0.5cm}
 
 Any keyword in the configuration file can be altered from the command line by specifying its 
@@ -228,8 +272,8 @@ name {\tt<keyword\_i>} and value {\tt<value\_i>} after passing the configuration
 
 \vspace{0.5cm}
 \noindent
-{\tt flask <config file> <keyword\_1>: <value\_1> <keyword\_2>: <value\_2>...}
-\vspace{0.5cm}
+{\tt flask <configuration file> <keyword\_1>: <value\_1> <keyword\_2>: <value\_2>...}
+\vspace{0.15cm}
 
 \noindent
 For example,
@@ -237,7 +281,30 @@ For example,
 \vspace{0.5cm}
 \noindent
 {\tt flask example.config RNDSEED: 334 MAP\_OUT: ./map-002.dat}
-\vspace{0.5cm}
+
+\subsubsection{To run pyFlask through Python}
+\label{sec:runpyFlask}
+
+The syntax for running the standard example by invoking the Python module {\tt pyFlask} from the Linux command prompt would be:
+
+\texttt{
+    \\
+    \$ cd <Root directory of Flask>/ \\
+    \$ python3 \\
+    >>> from py import pyFlask \\
+    >>> pyFlask.flask(["flask","example.config"]) \\
+}
+
+The values of keywords in the configuration can be modified on the fly by providing them as successive arguments, separated by commas and surrounded by double quote marks, to the {\tt pyFlask} module call. For instance, to change the value of the {\tt RNDSEED} variable to 334, use the following syntax:
+
+\texttt{
+    \\
+    %>>> pyFlask.flask(["flask","example.ini","RNDSEED:","334","MAP\_OUT:","./map-002.dat"])
+    >>> pyFlask.flask(["flask","example.ini","RNDSEED:","334"])
+}
+
+\subsubsection{Monitoring or recording the output}
+\label{sec:MonitorOutput}
 
 {\sc Flask} outputs to the screen a comprehensive description of what it is doing. In case you want to 
 store this information for later, you might want to redirect the output to a file, e.g.: 
@@ -253,6 +320,15 @@ or
 {\tt flask example.config RNDSEED: 334 MAP\_OUT: ./map-002.dat | tee r334.log}
 \vspace{0.5cm}
 
+
+\subsection{Directories and files}
+\label{sec:OutputDirs}
+
+Any output directories declared in the configuration file that do not already exist will be automatically created by {\sc Flask}. If the output directory already exists, {\sc Flask} will still run without errors; however, any files already present in those directories will be overwritten if they have the same name as in the configuration file.
+
+\vspace{0.5cm}
+\noindent
+{\bf Please note:} The location of all the directories declared in the configuration file (both, input and output) is with respect to the directory from where {\sc Flask} is run. It is \underline{not} with respect to the directory in which the configuration file resides!
 
 \subsection{Tips and things to keep an eye on}
 \label{sec:tips}
@@ -427,7 +503,7 @@ the hash (\#) is used to identify comments, this is only for aesthetic reasons a
 any effect on the parsing of the configuration file ({\tt \# DENS2KAPPA:} is still identified as 
 the {\tt DENS2KAPPA} keyword). More information about this can be found in the {\tt example.config} 
 file. 
-NOTE: in the current implementation, strings passed to the keywords cannot be longer than 109 
+{\bf NOTE:} in the current implementation, strings passed to the keywords cannot be longer than 1100 
 characters. Longer strings may cause a segmentation fault when reading the configuration file. 
 
 {\sc Flask} goes through a series of sequential computations that transforms the simulated data somehow; 
@@ -533,6 +609,8 @@ each one is also provided in {\tt example.config}):
   This means that if you create ellipticity maps from the catalogue you will not get the exact output 
   given by {\tt ELLIP\_MAP\_OUT} or {\tt ELLIPFITS\_PREFIX}, unless you set {\tt ELLIP\_SIGMA}$\leq 0$ 
   (although they will be statistically equivalent in the weak lensing regime).
+  
+  Also see the optional keyword {\tt REDUCED\_SHEAR}.
   
 \item {\tt GALDENSITY:} This takes a real number representing the 3D comoving galaxy number 
   density in $(h^{-1}\nv{Mpc})^{-3}$. It is only used if {\tt SELEC\_TYPE: 1} or {\tt SELEC\_TYPE: 3}. 
@@ -938,10 +1016,10 @@ each one is also provided in {\tt example.config}):
   as the one generated by the {\tt MAPWER\_OUT} keyword, at the same redshift. 
   You can set this keyword to {\tt 0} for no output.
 
-\item {\tt CATALOG\_OUT:} Path plus filename for a galaxy catalogue in text, FITS or compressed
-  FITS formats, chosen accordingly to the filename extension: {\tt .dat}, {\tt .fits} or {\tt .fits.gz}, 
+\item {\tt CATALOG\_OUT:} Path plus filename for a galaxy catalogue in {\it binary} FITS or compressed
+  FITS formats, chosen accordingly to the filename extension: {\tt .fits} or {\tt .fits.gz}, 
   respectively. Each row is one galaxy from the map described in {\tt MAPWER\_OUT} and 
-  the columns are chosen by the user using the {\tt CATALOG\_COLS} keyword. Set to {\tt 0} for no output.
+  the columns are chosen by the user using the {\tt CATALOG\_COLS} keyword. Set to {\tt 0} for no output. Also see the optional keyword {\tt CAT32BIT}.
 
 \item {\tt CATALOG\_COLS:} This takes as input everything in the same line of the configuration 
   file after it, and it specifies the columns to be included in the galaxy catalogue output by 
@@ -991,6 +1069,34 @@ each one is also provided in {\tt example.config}):
   \end{itemize}
   The column names have to be separated by spaces and they can appear in any number (no repeated 
   columns, though) and order.
+
+\item {\tt CAT\_COL\_NAMES:} (Optional) This keyword allows one to provide a custom header name for each of columns in the galaxy catalogue that are requested through the keyword {\tt CATALOG\_COLS}. The number of header names provided here should match the number of columns requested through {\tt CATALOG\_COLS} and their sequence must also match. If the keyword {\tt CAT\_COL\_NAMES} is missing in the configuration file, {\sc flask} will assign the columns defined through the {\tt CATALOG\_COLS} keyword as the column names.
+
+\item{\tt CAT32BIT:} (Optional) The galaxy catalogue is always written in binary format and this keyword allows the user to specify whether the floating point numbers should be written in 32-bit or 64-bit format. Set the value to be {\tt 1} to write in 32-bit and {\tt 0} for 64-bits. If this keyword is missing from the configuration file, and if the keyword {\tt CATALOG\_OUT} is present, {\sc flask} will assume a default value of 0 (64-bits) for the keyword {\tt CAT32BIT}, since it is the higher precision (although slower) option.
+
+\item{\tt REDUCED\_SHEAR:} (Optional) In most cases, the reduced shear is used when calculating the observed ellipticities (Equations (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise})). However, if the user wishes to use shear when calculating the observed ellipticities, this keyword should be set to a value of 0. Whether to use reduced shear for calculating the observed ellipticities. If this keyword is missing from the configuration file, a default value of 1 (reduced shear) will be assumed.
+
+If this keyword is set to 0, i.e. shear chosen instead of reduced shear, then Eqs. (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise}) are modified as
+%
+  \begin{equation}
+    \epsilon = 
+    \begin{dcases}
+      \epsilon_{\nv{s}}+\gamma, & |g|\leq 1; \\
+      \frac{1+g\epsilon_{\nv{s}}^{*}}{\epsilon_{\nv{s}}^{*}+g^{*}}, & |g|>1;\\
+    \end{dcases}
+    \label{eq:ellipticity-shear}
+  \end{equation}
+%
+  \begin{equation}
+    \epsilon(j) = \frac{1}{N_{\nv{gal}}(j)}\sum_i^{N_{\nv{gal}}(j)} \left[ \gamma(i)+\epsilon_{\nv{s}}(i) \right] 
+    = \gamma(j) + \frac{\epsilon_{\nv{s}}}{\sqrt{N_{\nv{gal}}(j)}},
+    \label{eq:ellip-map-noise-shear}
+  \end{equation}
+%
+In addition, while implementing Eqs. (\ref{eq:ellipticity-shear}) and (\ref{eq:ellip-map-noise-shear}), {\sc flask} imposes the restriction that the maximum value of shear ($\gamma$) that can be encountered is 0.1. Hence, intrinsic elipticities ($\epsilon_{\nv{s}}$) are allowed to be only up to 0.9. Also note that for $|g|>1$, {\sc flask} will always use the reduced shear even if the keyword {\tt REDUCED\_SHEAR} is set to 0.
+
+If this keyword is missing from the configuration file, {\sc flask} will proceed with using reduced shear as a default, according to Equations (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise}).
+
 \end{itemize}
 
 
@@ -1092,7 +1198,7 @@ In case you use {\sc class}\footnote{\tt{\href{http://class-code.net/}{http://cl
 \citep{Blas11x, Dio13x} or 
 {\sc camb sources}\footnote{\tt{\href{http://camb.info/sources}{http://camb.info/sources}}}
 \citep{Challinor11x} to compute the input power spectra, it is possible to use the 
-{\sc python} scripts called {\tt class2info.py} and {\tt camb2info.py} in {\sc flask}'s 
+Python scripts called {\tt class2info.py} and {\tt camb2info.py} in {\sc Flask}'s 
 {\tt src/scripts} folder to create the fields information file corresponding to {\sc class} and 
 {\sc camb sources} input ({\tt .ini}) files. See Sec. \ref{sec:aux} and the scripts' docstring for more information.
 
@@ -1126,7 +1232,7 @@ In the current implementation, the $C_{\nv{in}}^{ij}(\ell)$s can be passed to {\
 have two columns: $\ell$ and $C_{\nv{in}}^{ij}(\ell)$ (no headers allowed here). The $C_{\nv{in}}^{ij}(\ell)$ 
 is the power spectra itself and not something like 
 $l(l+1)/(2\pi)\cdot C_{\nv{in}}^{ij}(\ell)$. They are interpolated by the code so it is not necessary 
-to specify them at every $\ell$ or at integer $\ell$s. For the user's convenience, {\sc python} 
+to specify them at every $\ell$ or at integer $\ell$s. For the user's convenience, Python 
 scripts called {\tt prepClassInput.py} and {\tt prepCambInput.py} are available in {\sc flask}'s 
 {\tt src/scripts} folder that can translate {\sc class} and {\sc camb sources} output power spectra 
 into {\sc flask} input power spectra. See Sec. \ref{sec:aux} and the scripts' docstring for more information. 
@@ -1200,7 +1306,7 @@ pixels covered by stars is greater than the value specified in the input.
 \subsection{{\tt camb2info.py}}
 \label{sec:camb2info}
 
-This {\sc python} script takes a {\sc camb sources} input file and creates a 
+This Python script takes a {\sc camb sources} input file and creates a 
 {\sc flask} fields information file. It takes as input, in this order: 
 the {\sc camb sources} {\tt .ini} filename and the output filename. 
 
@@ -1218,14 +1324,14 @@ top-hat redshift bins.
 \subsection{{\tt class2info.py}}
 \label{sec:class2info}
 
-This {\sc python} script works in the same way as {\tt camb2info.py} but 
+This Python script works in the same way as {\tt camb2info.py} but 
 for {\sc class} input ({\tt .ini}) files (it uses the {\tt selection\_width} 
 keyword as half of the redshift bin width).
 
 \subsection{{\tt ChangeMapResolution.py}}
 \label{sec:map-res}
 
-This {\sc python} script gets a {\sc healpix} map in FITS format, changes its 
+This Python script gets a {\sc healpix} map in FITS format, changes its 
 resolution (given by $N_{\nv{side}}$) and write the new map 
 to another FITS file. Its inputs are, in this order: the input map, $N_{\nv{side}}$ 
 and the output map. When increasing the resolution, the pixels inside the original 
@@ -1235,7 +1341,7 @@ the average value of the original pixels inside it.
 \subsection{{\tt prepCambInput.py}}
 \label{sec:prepcambinput}
 
-This {\sc python} script translates the $C(\ell)$s written by {\sc camb sources} to the 
+This Python script translates the $C(\ell)$s written by {\sc camb sources} to the 
 output file with {\tt scalCovCls.dat} suffix to the $C(\ell)$ files used by {\sc flask} 
 as input: besides partitioning the $C(\ell)$s into separate and appropriately named files  
 (see Sec. \ref{sec:cls}), it removes the $\ell(\ell+1)/2\pi$ factors to return the pure 
@@ -1249,7 +1355,7 @@ the fields information file; and the prefix for the output $C(\ell)$s.
 \subsection{{\tt prepClassInput.py}}
 \label{sec:prepclassinput}
 
-This {\sc python} script is the analogous of {\tt prepCambInput.py} but for {\sc class} 
+This Python script is the analogous of {\tt prepCambInput.py} but for {\sc class} 
 output $C(\ell)$s. There are two more differences from {\tt prepCambInput.py}. First, since 
 {\sc class} output files have headers, this script does not require a fields information 
 file and only take two input parameters, in  this order: the {\sc class} $C(\ell)$s file 
@@ -1261,7 +1367,7 @@ factors described in \citet{Hu00x}. Check the script code for more information.
 \subsection{{\tt summarizeData.py}}
 \label{sec:summarizedata}
 
-This {\sc python} script takes a list of $N$ files (which can be specified using wildcards like {\tt *}) 
+This Python script takes a list of $N$ files (which can be specified using wildcards like {\tt *}) 
 that must all have the same shape (basically a table with the same number of columns and rows) 
 and headers starting with {\tt \#} (or no headers) and compute the average of each entry $x_{ij}$ over all files. 
 For example, the table element $\bar{x}_{ij}$ in the output file is given by:
@@ -1279,14 +1385,14 @@ and the files to be averaged over (which can be specified using wildcards).
 \subsection{{\tt ViewMap.py}}
 \label{sec:viewmap}
 
-This {\sc python} script takes as arguments filenames of {\sc healpix} maps saved as FITS files 
+This Python script takes as arguments filenames of {\sc healpix} maps saved as FITS files 
 and plots them in Mollweide projection. Each map is opened in a different window and can be 
 saved under different formats.
 
 \subsection{{\tt z-range2camb-ini.py}}
 \label{sec:zrange2camb}
 
-This {\sc python} script prints to {\tt stdout} the part of {\sc camb sources} {\tt .ini} file 
+This Python script prints to {\tt stdout} the part of {\sc camb sources} {\tt .ini} file 
 that describes the redshift windows for the galaxy counts and lensing. It takes as input a 
 redshift range $[z_{\rm{min}}, z_{\rm{max}}]$ and the number of redshift bins $N$, in this order,
 and splits the range in contigous $N$ bins that span the range. Currently it only outputs 
@@ -1305,7 +1411,7 @@ file. Check the script comments for more information.
 \subsection{{\tt joinClFiles.py}}
 \label{sec:joinClFiles}
 
-This {\sc python} script takes as input an arbitrary number of individual 
+This Python script takes as input an arbitrary number of individual 
 power spectra files following {\sc flask}'s naming convention and put them 
 into a single file, whose columns will be named {\tt l} (for the multipole numbers 
 $\ell$) and the same as the original filenames (for the power spectra columns), 
@@ -1315,16 +1421,12 @@ $C^{ij}(\ell)$ files and the output file (that must be the last input passed to 
 \subsection{{\tt MathMap.py}}
 \label{sec:MathMap}
 
-This {\sc python} script allows mathematical operations to be made with {\sc healpix} 
-maps with the same $N_{\mathrm{side}}$ directly from the command line. The operations are 
-made pixel-wise. It allows for addition, subtraction, multiplication, division and 
-exponentiation, as well as parenthesis. For more information, check its docstring by 
-running the script without any arguments. An arbitrary number of maps can be operated on, 
-and they are referred to by their filenames. It is recommended to always separate all 
-terms passed to the script (operators, parenthesis and filenames) by spaces, to avoid 
-confusion. Note that parenthesis, multiplication and exponentiation are referred to 
-by tailored symbols.
+This Python script allows mathematical operations to be made with {\sc healpix} maps with the same $N_{\mathrm{side}}$ directly from the command line. The operations are made pixel-wise. It allows for addition, subtraction, multiplication, division and exponentiation, as well as parenthesis. For more information, check its docstring by running the script without any arguments. An arbitrary number of maps can be operated on, and they are referred to by their filenames. It is recommended to always separate all terms passed to the script (operators, parenthesis and filenames) by spaces, to avoid confusion. Note that parenthesis, multiplication and exponentiation are referred to by tailored symbols.
 
+\subsection{{\tt config\_to\_ini.py}}
+\label{sec:config_to_ini}
+
+This script converts a configuration file given in the {\tt .config} format to the one in {\tt .ini} format.
 
 %%%% Bibliografia %%%%
 \bibliographystyle{apalike}
