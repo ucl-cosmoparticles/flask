@@ -36,7 +36,7 @@
 \newenvironment{alltt}{\ttfamily}{\par}
 \usepackage{moreverb}
 \usepackage{caption}
-
+\usepackage{enumitem}                            % Allows us to control the amount of margins in item lists.
 
 % Define as bordas do documento
 \usepackage[a4paper, top=2.5cm, bottom=3.5cm, inner=3.0cm, outer=3.0cm]{geometry}
@@ -75,7 +75,8 @@
 \begin{center}
 %\vspace{12cm}
 {\Huge \sffamily \bfseries FLASK:\vspace{0.5cm}\linebreak 
-Full-sky Lognormal Astro-fields Simulation Kit}\\
+Full-sky Lognormal Astro-fields Simulation Kit\vspace{0.5cm}\linebreak 
+Version 2.0}\\
 \vspace{1cm}
 \includegraphics[width=0.4\textwidth]{flask_logo.eps}\\
 \vspace{1cm}
@@ -123,6 +124,29 @@ $^\dag$Universidade de S\~{a}o Paulo, Brazil
 
 Thank you for using this software. Please report any bugs to {\tt hsxavier@if.usp.br} and acknowledge {\sc flask} by citing the publication \citet{Xavier16mn}.
    
+
+\chapter{What is new in Version 2.0}
+\label{sec:WhatsNew}
+
+\begin{itemize}[leftmargin=*]
+	
+	\item A Python wrapper has been added, so that {\sc Flask} can be invoked as a Python module. Optionally, the code can still be compiled the old-fashioned way, through purely a C++ compiler.
+
+	\item {\sc Flask}-generated galaxy catalogues can now have user-defined custom header.
+
+	\item {\sc Flask}-generated FITS files are saved in binary format (which are much smaller and faster to write) and can be overwritten without terminating the code. An option has been added to choose between 32-bit or 64-bit binary format. FITS files can no longer be written in \texttt{.dat} (pure text) format.
+	
+	\item Added longer string support in the input config file.
+	
+	\item Added the option to provide input parameters through a \texttt{.ini} file (in addition to the existing \texttt{.config} format).
+	
+	\item New output directories are created if they do not exist already.
+	
+	\item Option added to select whether shear or reduced sheared should be used while calculating ellipticities.
+	
+	\item Minor bug fixes to improve stability.
+
+\end{itemize}
 
 \chapter{Installation}
 \label{sec:installation}
@@ -875,6 +899,8 @@ each one is also provided in {\tt example.config}):
   and ordered redshift bins. The resulting convergence fields are added to the field list and from 
   now on are treated the same way as ordinary convergence fields. If {\tt DENS2KAPPA} is set to {\tt 0}, 
   no integration is performed and no new convergence is computed. 
+  
+  PLEASE NOTE: {\sc Flask} uses the upper edge of the redshift bin as the representative value of $z$ while performing the line of sight integration.
 
 \item {\tt FLIST\_OUT:} This keyword takes a string. If anything other than {\tt 0}, the code 
   treat it as a filename and writes the list of fields in use by the code to this file. 
@@ -1070,11 +1096,11 @@ each one is also provided in {\tt example.config}):
   The column names have to be separated by spaces and they can appear in any number (no repeated 
   columns, though) and order.
 
-\item {\tt CAT\_COL\_NAMES:} (Optional) This keyword allows one to provide a custom header name for each of columns in the galaxy catalogue that are requested through the keyword {\tt CATALOG\_COLS}. The number of header names provided here should match the number of columns requested through {\tt CATALOG\_COLS} and their sequence must also match. If the keyword {\tt CAT\_COL\_NAMES} is missing in the configuration file, {\sc flask} will assign the columns defined through the {\tt CATALOG\_COLS} keyword as the column names.
+\item {\tt CAT\_COL\_NAMES:} (Optional) This keyword allows one to provide a custom header name for each of the columns in the galaxy catalogue that are requested through the keyword {\tt CATALOG\_COLS}. The number of header names provided here should match the number of columns requested through {\tt CATALOG\_COLS} and their sequence must also match. If the keyword {\tt CAT\_COL\_NAMES} is missing in the configuration file, {\sc flask} will assign the columns defined through the {\tt CATALOG\_COLS} keyword as the column names.
 
-\item{\tt CAT32BIT:} (Optional) The galaxy catalogue is always written in binary format and this keyword allows the user to specify whether the floating point numbers should be written in 32-bit or 64-bit format. Set the value to be {\tt 1} to write in 32-bit and {\tt 0} for 64-bits. If this keyword is missing from the configuration file, and if the keyword {\tt CATALOG\_OUT} is present, {\sc flask} will assume a default value of 0 (64-bits) for the keyword {\tt CAT32BIT}, since it is the higher precision (although slower) option.
+\item{\tt CAT32BIT:} (Optional) The galaxy catalogue is always written in binary format and this keyword allows the user to specify whether the floating point numbers should be written in 32-bit or 64-bit format. Set the value to be {\tt 1} to write in 32-bit and {\tt 0} for 64-bits. If this keyword is missing from the configuration file, and if the keyword {\tt CATALOG\_OUT} is present, {\sc flask} will assume a default value of 0 (64-bits) for the keyword {\tt CAT32BIT}, since it is the higher precision (although slower) option. The 32-bit option produces sufficient precision for most purposes, so one should seriously consider it in order to save hard disk space and speed up {\sc flask}.
 
-\item{\tt REDUCED\_SHEAR:} (Optional) In most cases, the reduced shear is used when calculating the observed ellipticities (Equations (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise})). However, if the user wishes to use shear when calculating the observed ellipticities, this keyword should be set to a value of 0. Whether to use reduced shear for calculating the observed ellipticities. If this keyword is missing from the configuration file, a default value of 1 (reduced shear) will be assumed.
+\item{\tt REDUCED\_SHEAR:} (Optional) In most cases, the reduced shear is used when calculating the observed ellipticities (Equations (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise})). However, if the user wishes to use shear when calculating the observed ellipticities, this keyword should be set to a value of 0. If this keyword is missing from the configuration file, a default value of 1 (reduced shear) will be assumed (Equations (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise}) used).
 
 If this keyword is set to 0, i.e. shear chosen instead of reduced shear, then Eqs. (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise}) are modified as
 %
@@ -1094,8 +1120,6 @@ If this keyword is set to 0, i.e. shear chosen instead of reduced shear, then Eq
   \end{equation}
 %
 In addition, while implementing Eqs. (\ref{eq:ellipticity-shear}) and (\ref{eq:ellip-map-noise-shear}), {\sc flask} imposes the restriction that the maximum value of shear ($\gamma$) that can be encountered is 0.1. Hence, intrinsic elipticities ($\epsilon_{\nv{s}}$) are allowed to be only up to 0.9. Also note that for $|g|>1$, {\sc flask} will always use the reduced shear even if the keyword {\tt REDUCED\_SHEAR} is set to 0.
-
-If this keyword is missing from the configuration file, {\sc flask} will proceed with using reduced shear as a default, according to Equations (\ref{eq:ellipticity}) and (\ref{eq:ellip-map-noise}).
 
 \end{itemize}
 
