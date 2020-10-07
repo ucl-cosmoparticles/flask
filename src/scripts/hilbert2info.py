@@ -68,7 +68,7 @@ for line in lines:
                 if 'sCl' in line[eqpos+1:]:
                     HasKappa = 1
                 if HasGal+HasKappa!=nf:
-                    print "ERROR: unkown field settings in output."
+                    print("ERROR: unkown field settings in output.")
                     sys.exit()
             # Count number of redshift bins and get their means:
             if 'selection_mean' == line[:eqpos] or 'selection_mean'==line.split()[0]:
@@ -82,7 +82,7 @@ for line in lines:
                 if len(halfwidthz) == 1:
                     halfwidithz = halfwidthz * nz;
                 elif len(halfwidthz) != nz:
-                    print "ERROR: redshift bins are not well defined."
+                    print("ERROR: redshift bins are not well defined.")
                     sys.exit()
 
 fin = open(classinput, 'r')
@@ -106,7 +106,7 @@ for line in lines:
                 if 'sCl' in line[eqpos+1:]:
                     HasKappa = 1
                 if HasGal+HasKappa!=nf:
-                    print "ERROR: unkown field settings in output."
+                    print("ERROR: unkown field settings in output.")
                     sys.exit()
             # Count number of redshift bins and get their means:
             if 'selection_mean' == line[:eqpos] or 'selection_mean'==line.split()[0]:
@@ -178,10 +178,10 @@ def ftype(f):
 # Output:
 fout = open(fieldinfo, 'w')
 
-print >>fout, "# Field number, z bin number, mean, shift, field type, zmin, zmax"
-print >>fout, "# Types: 1-galaxies 2-shear\n"
+print(fout, "# Field number, z bin number, mean, shift, field type, zmin, zmax")
+print(fout, "# Types: 1-galaxies 2-shear\n")
 
 for f in range(1,nf+1):
     for z in range(1,nz+1):
-        print >>fout,'{0:6d} {1:6d}   {2:.4f}   {3:.4f} {4:6d}   {5:.4f}   {6:.4f}'.format(f, z, mean(f), shift(f, meanz[z-1]), ftype(f), meanz[z-1]-halfwidthz[z-1], meanz[z-1]+halfwidthz[z-1])
+        print(fout,'{0:6d} {1:6d}   {2:.4f}   {3:.4f} {4:6d}   {5:.4f}   {6:.4f}'.format(f, z, mean(f), shift(f, meanz[z-1]), ftype(f), meanz[z-1]-halfwidthz[z-1], meanz[z-1]+halfwidthz[z-1]))
 
