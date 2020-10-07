@@ -12,17 +12,23 @@ COMP = g++
 BIN  = ../bin
 OBJ  = ../obj
 SRC  = ../src
-PYF  = ../py
+#PYF  = ../py
 
 # Healpix location:
-HEALDIR  =  /home/jayesh/Documents/Euclid/Software/Healpix_3.50
+HEALDIR  =  /mnt/c/Users/arthu/Work/lib/Healpix_3.60/
 HEALDATA = $(HEALDIR)/data
-CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
-LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
+CXXHEAL  = -I$(HEALDIR)/include/healpix_cxx
+LDHEAL   = -L$(HEALDIR)/lib
+
+# Healpix location (for versions <=3.50):
+#HEALDIR  =  /home/skems/prog/Healpix_3.50_2018Dec10/Healpix_3.50
+#HEALDATA = $(HEALDIR)/data
+#CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
+#LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
 
 # Python wrapper libraries:
 # If the wrapper is to be used from Python 2.7, then this should be something like: -I/usr/include/python2.7
-PYWRAPLIB1 = -I/usr/include/python3.6
+PYWRAPLIB1 = -I/usr/include/python3.6/
 
 # Location of some 'standard' libraries that might be required if not included by default:
 LIB1 = -I/usr/include
@@ -30,10 +36,14 @@ LIB2 = -I/usr/include/x86_64-linux-gnu
 
 # Location of other headers and libraries (if not in a default location):
 # Uncomment and change path if required:
-#CXXFITS  = -I/path/to/cfitsio/headers
-#LDFITS   = -L/path/to/cfitsio/libraries
+CXXFITS  = -I/mnt/c/User/arthu/Work/lib/cfitsio/
+LDFITS   = -L/mnt/c/User/arthu/Work/lib/cfitsio/
 #CXXGSL   = -I/path/to/gsl/headers/folder
 #LDGSL    = -L/path/to/gsl/libraries/folder
+
+###########################################################
+### Library and header locations for specific computers ###
+###########################################################
 
 # Options for SDC-UK
 ifeq ($(HOSTNAME), sdc-uk.roe.ac.uk)
@@ -90,16 +100,24 @@ CXXFITS  = -I/sto/home/hsxavier/cfitsio
 LDFITS   = -L/sto/home/hsxavier/cfitsio
 endif
 
+
+##################################
+### Back to defining variables ###
+##################################
+
 # Get Healpix version and check if it includes their own complex number class:
 HEALVERSION := $(shell grep -o '[0-9]*\.[0-9]*' $(HEALDIR)/Version)
-USEXCOMPLEX := $(shell echo "$(HEALVERSION) < 3.30" | bc) # Set to 1 if Healpix version < 3.30, 0 otherwise.
-USEFFTPACK  := $(shell echo "$(HEALVERSION) < 3.50" | bc) # Set to 1 if Healpix version < 3.50, 0 otherwise.
+USEXCOMPLEX := $(shell echo "$(HEALVERSION) < 3.30" | bc)# Set to 1 if Healpix version < 3.30, 0 otherwise.
+USEFFTPACK  := $(shell echo "$(HEALVERSION) < 3.50" | bc)# Set to 1 if Healpix version < 3.50, 0 otherwise.
+USEMAP2TGA  := $(shell echo "$(HEALVERSION) < 3.60" | bc)# Set to 1 if Healpix version < 3.60, 0 otherwise.
+USEOLDLIBS  := $(shell echo "$(HEALVERSION) < 3.60" | bc)# Set to 1 if Healpix version < 3.60, 0 otherwise.
 # Set FFTFLAG according to Healpix version:
-ifeq ($(USEFFTPACK), 1)
+ifeq ($(USEFFTPACK), 1) # v < 3.50
 FFTFLAG = -lfftpack
 else
 FFTFLAG = -lpocketfft
 endif
+
 # Get code version:
 FLASKCOMMIT := $(shell git rev-parse --short HEAD)
 ifeq ($(FLASKCOMMIT), )
@@ -107,13 +125,32 @@ FLASKCOMMIT = missing
 endif
 
 # Other compiler flags:
-CXXOMP   = -fopenmp
-LIBS     = -lgsl -lgslcblas -lhealpix_cxx -lcxxsupport -lcfitsio -lsharp $(FFTFLAG) -lc_utils -lgomp
+CXXOMP = -fopenmp
+
+
+# Libraries to link:
+
+# Static Healpix library (force its use to avoid the need to set LD_LIBRARY_PATH to $(HEALDIR)/lib):
+LIBHEALPIX = -Wl,-Bstatic -lhealpix_cxx -Wl,-Bdynamic
+# Shared Healpix library (use it if available; uncomment if desired):
+#LIBHEALPIX = -lhealpix_cxx
+
+# Static libsharp (force its use to avoid the need to set LD_LIBRARY_PATH to $(HEALDIR)/lib):
+LIBSHARP = -Wl,-Bstatic -lsharp -Wl,-Bdynamic
+# Shared libsharp (use it if available; uncomment if desired):
+#LIBSHARP = -lsharp
+
+ifeq ($(USEOLDLIBS), 1)
+LIBS = -lgsl -lgslcblas -lhealpix_cxx -lcxxsupport -lcfitsio -lsharp $(FFTFLAG) -lc_utils -lgomp
+else
+LIBS = -lgsl -lgslcblas $(LIBHEALPIX) -lcfitsio $(LIBSHARP) -lgomp
+endif
 
 
 # Dynamic defines (#define that are set during compilation time, by passing instruction to compiler):
 VCONTROL   = -D FLASKCOMMIT=\"$(FLASKCOMMIT)\"
-DEFCOMPLEX = -D USEXCOMPLEX=$(USEXCOMPLEX)  
+DEFCOMPLEX = -D USEXCOMPLEX=$(USEXCOMPLEX)
+DEFMAP2TGA = -D USEMAP2TGA=$(USEMAP2TGA)
 
 
 #############################
@@ -123,6 +160,9 @@ DEFCOMPLEX = -D USEXCOMPLEX=$(USEXCOMPLEX)
 # General instructions:
 
 all: $(BIN)/flask $(PYF)/_pyFlask.so $(BIN)/GenStarMask $(BIN)/XiCalculator $(BIN)/Dens2KappaCls
+
+cpp: $(BIN)/flask $(BIN)/GenStarMask $(BIN)/XiCalculator $(BIN)/Dens2KappaCls
+
 
 clean:
 	rm -f $(BIN)/*
@@ -238,7 +278,7 @@ $(OBJ)/SelectionFunc.o: $(SRC)/SelectionFunc.cpp $(SRC)/SelectionFunc.hpp $(SRC)
 
 $(OBJ)/GeneralOutput.o: $(SRC)/GeneralOutput.cpp $(SRC)/GeneralOutput.hpp $(SRC)/ParameterList.hpp \
 			$(SRC)/flask_aux.hpp $(SRC)/definitions.hpp $(SRC)/FieldsDatabase.hpp
-	$(COMP) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/GeneralOutput.cpp -o $@
+	$(COMP) $(DEFMAP2TGA) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -c $(SRC)/GeneralOutput.cpp -o $@
 
 $(OBJ)/Cosmology.o: $(SRC)/Cosmology.cpp $(SRC)/Cosmology.hpp $(SRC)/Utilities.hpp $(SRC)/Integral.hpp \
 	$(SRC)/ParameterList.hpp $(SRC)/interpol.h
