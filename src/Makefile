@@ -12,7 +12,7 @@ COMP = g++
 BIN  = ../bin
 OBJ  = ../obj
 SRC  = ../src
-#PYF  = ../py
+PYF  = ../py
 
 # Healpix location:
 HEALDIR  =  /mnt/c/Users/arthu/Work/lib/Healpix_3.60/
@@ -28,7 +28,7 @@ LDHEAL   = -L$(HEALDIR)/lib
 
 # Python wrapper libraries:
 # If the wrapper is to be used from Python 2.7, then this should be something like: -I/usr/include/python2.7
-PYWRAPLIB1 = -I/usr/include/python3.6/
+PYWRAPLIB1 = -I/usr/include/python3.6m/
 
 # Location of some 'standard' libraries that might be required if not included by default:
 LIB1 = -I/usr/include
