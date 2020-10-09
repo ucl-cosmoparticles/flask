@@ -15,20 +15,20 @@ SRC  = ../src
 PYF  = ../py
 
 # Healpix location:
-HEALDIR  =  /mnt/c/Users/arthu/Work/lib/Healpix_3.60/
-HEALDATA = $(HEALDIR)/data
-CXXHEAL  = -I$(HEALDIR)/include/healpix_cxx
-LDHEAL   = -L$(HEALDIR)/lib
+#HEALDIR  =  /mnt/c/Users/arthu/Work/lib/Healpix_3.60/
+#HEALDATA = $(HEALDIR)/data
+#CXXHEAL  = -I$(HEALDIR)/include/healpix_cxx
+#LDHEAL   = -L$(HEALDIR)/lib
 
 # Healpix location (for versions <=3.50):
-#HEALDIR  =  /home/skems/prog/Healpix_3.50_2018Dec10/Healpix_3.50
-#HEALDATA = $(HEALDIR)/data
-#CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
-#LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
+HEALDIR  =  /home/jayesh/Documents/Euclid/Software/Healpix_3.50
+HEALDATA = $(HEALDIR)/data
+CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
+LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
 
 # Python wrapper libraries:
 # If the wrapper is to be used from Python 2.7, then this should be something like: -I/usr/include/python2.7
-PYWRAPLIB1 = -I/usr/include/python3.6m/
+PYWRAPLIB1 = -I/usr/include/python3.6
 
 # Location of some 'standard' libraries that might be required if not included by default:
 LIB1 = -I/usr/include
@@ -36,8 +36,8 @@ LIB2 = -I/usr/include/x86_64-linux-gnu
 
 # Location of other headers and libraries (if not in a default location):
 # Uncomment and change path if required:
-CXXFITS  = -I/mnt/c/User/arthu/Work/lib/cfitsio/
-LDFITS   = -L/mnt/c/User/arthu/Work/lib/cfitsio/
+#CXXFITS  = -I/mnt/c/User/arthu/Work/lib/cfitsio/
+#LDFITS   = -L/mnt/c/User/arthu/Work/lib/cfitsio/
 #CXXGSL   = -I/path/to/gsl/headers/folder
 #LDGSL    = -L/path/to/gsl/libraries/folder
 
@@ -278,7 +278,7 @@ $(OBJ)/SelectionFunc.o: $(SRC)/SelectionFunc.cpp $(SRC)/SelectionFunc.hpp $(SRC)
 
 $(OBJ)/GeneralOutput.o: $(SRC)/GeneralOutput.cpp $(SRC)/GeneralOutput.hpp $(SRC)/ParameterList.hpp \
 			$(SRC)/flask_aux.hpp $(SRC)/definitions.hpp $(SRC)/FieldsDatabase.hpp
-	$(COMP) $(DEFMAP2TGA) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -c $(SRC)/GeneralOutput.cpp -o $@
+	$(COMP) $(DEFMAP2TGA) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/GeneralOutput.cpp -o $@
 
 $(OBJ)/Cosmology.o: $(SRC)/Cosmology.cpp $(SRC)/Cosmology.hpp $(SRC)/Utilities.hpp $(SRC)/Integral.hpp \
 	$(SRC)/ParameterList.hpp $(SRC)/interpol.h
