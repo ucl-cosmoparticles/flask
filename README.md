@@ -15,11 +15,10 @@ FLASK requires the following software to be pre-installed on your machine:
 Because pyFlask uses shared libraries at the moment, this requires Healpix and Libsharp to be re-compiled using the flag `-fpic` to create these files.
 "Simply" re-run healpix's `./configure` to re-compile both libraries adding the `-fpic` flag to both. In case pyFlask is not necessary, you can avoid re-compiling Healpix and libsharp by making only the C++ part of Flask (see bellow).
 
+### Flask Compilation
 Edit the `Makefile` in the `src/` subdirectory according to your machine's requirements. If you are using a healpix version bellow 3.60, please pay attention to the `Makefile`.
 In particular, the HEALDIR variable must be set to the location of Healpix installation on your machine.
 The variable PYWRAPLIB1 must be set to the location of the C++ header files relevant to Python on your machine.
-
-### Flask Compilation
 
 From Linux command prompt:
 ```shell
