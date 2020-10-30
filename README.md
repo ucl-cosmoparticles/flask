@@ -6,7 +6,7 @@ Paper describing the code: Xavier et al. 2016, MNRAS Vol. 459, p. 3693 (arXiv:16
 FLASK requires the following software to be pre-installed on your machine:
 - Linux operating system
 - OpenMP (for parallelisation)
-- HEALPix (for mapping the sky)
+- HEALPix (for mapping the sky): Instructions for compiling Flask and pyFlask for healpix 3.60+ can be found bellow.
 - GNU Scientific Library (GSL)
 - CFITSIO (to work with FITS format files)
 
@@ -15,6 +15,10 @@ FLASK requires the following software to be pre-installed on your machine:
 Edit the `Makefile` in the `src/` subdirectory according to your machine's requirements. If you are using a healpix version bellow 3.60, please pay attention to the `Makefile`.
 In particular, the HEALDIR variable must be set to the location of Healpix installation on your machine.
 The variable PYWRAPLIB1 must be set to the location of the C++ header files relevant to Python on your machine.
+
+### For Healpix 3.60+
+Because pyFlask uses shared libraries at the moment, this requires Healpix and Libsharp to be re-compiled using the flag `-fpic` to create these files.
+"Simply" re-run healpix's `./configure` to re-compile both libraries adding the `-fpic` flag to both. In case pyFlask is not necessary, you can avoid re-compiling Healpix and libsharp by making only the C++ part of Flask (see bellow).
 
 
 From Linux command prompt:
