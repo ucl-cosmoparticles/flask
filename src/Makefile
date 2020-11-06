@@ -26,9 +26,15 @@ HEALDATA = $(HEALDIR)/data
 CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
 LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
 
+# Python binary:
+# If the wrapper is to be used from e.g. Python 2.7, then this would be
+# something like `python2.7`. Provide the full path if necessary.
+PYTHON = python3
+
 # Python wrapper libraries:
-# If the wrapper is to be used from Python 2.7, then this should be something like: -I/usr/include/python2.7
-PYWRAPLIB1 = -I/usr/include/python3.6
+PYTHON_CXXFLAGS = -I$(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_path("include"))')
+PYTHON_LDCXXSHARED = $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_config_var("LDCXXSHARED"))')
+PYTHON_LDFLAGS = $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_config_var("LDFLAGS"))')
 
 # Location of some 'standard' libraries that might be required if not included by default:
 LIB1 = -I/usr/include
@@ -55,7 +61,6 @@ CXXFITS  = -I/usr/include/cfitsio/
 LDFITS   = -L/usr/lib64
 CXXGSL   = -I/home/loureiro/lib/include/gsl
 LDGSL    = -L/home/loureiro/lib/lib
-PYWRAPLIB1 = -I/usr/include/python3.6m
 endif
 
 
@@ -209,7 +214,7 @@ $(PYF)/_pyFlask.so: $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
 			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
 			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o \
 			$(OBJ)/pyFlask_wrap.o $(OBJ)/pyFlask.o
-	$(COMP) -shared $(LDHEAL) $(LDFITS) $(LDGSL) $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
+	$(PYTHON_LDCXXSHARED) $(PYTHON_LDFLAGS) $(LDHEAL) $(LDFITS) $(LDGSL) $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
 			$(OBJ)/gsl_aux.o $(OBJ)/s2kit10_naive.o $(OBJ)/interpol.o \
 			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
 			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
@@ -319,4 +324,4 @@ $(OBJ)/pyFlask_wrap.o: $(SRC)/pyFlask_wrap.cxx $(SRC)/definitions.hpp $(SRC)/Par
 			$(SRC)/fitsfunctions.hpp $(SRC)/lognormal.hpp $(SRC)/FieldsDatabase.hpp \
 			$(SRC)/Spline.hpp \
 			$(SRC)/ini_config.hpp $(SRC)/handle_ini_format.hpp
-	$(COMP) $(VCONTROL) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) $(PYWRAPLIB1) -fpic -c $(SRC)/pyFlask_wrap.cxx -o $@
+	$(COMP) $(PYTHON_CXXFLAGS) $(VCONTROL) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/pyFlask_wrap.cxx -o $@
