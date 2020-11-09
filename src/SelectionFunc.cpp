@@ -2,8 +2,8 @@
 #include "Utilities.hpp"
 #include "flask_aux.hpp" // For definitions namespace and n2fz function.
 #include <healpix_map_fitsio.h>
-#include "interpol.h"
-#include "Maximize.h"
+#include "interpol.hpp"
+#include "Maximize.hpp"
 
 //using std::cout; using std::endl;
 

@@ -26,16 +26,6 @@ HEALDATA = $(HEALDIR)/data
 CXXHEAL  = -I$(HEALDIR)/src/cxx/generic_gcc/include
 LDHEAL   = -L$(HEALDIR)/src/cxx/generic_gcc/lib
 
-# Python binary:
-# If the wrapper is to be used from e.g. Python 2.7, then this would be
-# something like `python2.7`. Provide the full path if necessary.
-PYTHON = python3
-
-# Python wrapper libraries:
-PYTHON_CXXFLAGS = -I$(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_path("include"))')
-PYTHON_LDCXXSHARED = $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_config_var("LDCXXSHARED"))')
-PYTHON_LDFLAGS = $(shell $(PYTHON) -c 'import sysconfig; print(sysconfig.get_config_var("LDFLAGS"))')
-
 # Location of some 'standard' libraries that might be required if not included by default:
 LIB1 = -I/usr/include
 LIB2 = -I/usr/include/x86_64-linux-gnu
@@ -164,9 +154,7 @@ DEFMAP2TGA = -D USEMAP2TGA=$(USEMAP2TGA)
 
 # General instructions:
 
-all: $(BIN)/flask $(PYF)/_pyFlask.so $(BIN)/GenStarMask $(BIN)/XiCalculator $(BIN)/Dens2KappaCls
-
-cpp: $(BIN)/flask $(BIN)/GenStarMask $(BIN)/XiCalculator $(BIN)/Dens2KappaCls
+all: $(BIN)/flask $(BIN)/GenStarMask $(BIN)/XiCalculator $(BIN)/Dens2KappaCls
 
 
 clean:
@@ -206,23 +194,6 @@ $(BIN)/flask: $(OBJ)/flask.o $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
 			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
 			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o -o $@ $(LIBS)
 
-$(PYF)/_pyFlask.so: $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
-			$(OBJ)/gsl_aux.o $(OBJ)/s2kit10_naive.o $(OBJ)/interpol.o \
-			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
-			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
-			$(OBJ)/ClProcessing.o $(OBJ)/Maximize.o $(OBJ)/fitsfunctions.o \
-			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
-			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o \
-			$(OBJ)/pyFlask_wrap.o $(OBJ)/pyFlask.o
-	$(PYTHON_LDCXXSHARED) $(PYTHON_LDFLAGS) $(LDHEAL) $(LDFITS) $(LDGSL) $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
-			$(OBJ)/gsl_aux.o $(OBJ)/s2kit10_naive.o $(OBJ)/interpol.o \
-			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
-			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
-			$(OBJ)/ClProcessing.o $(OBJ)/Maximize.o $(OBJ)/fitsfunctions.o \
-			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
-			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o \
-			$(OBJ)/pyFlask_wrap.o $(OBJ)/pyFlask.o -o $@ $(LIBS)
-
 # Objects:
 
 $(OBJ)/Dens2KappaCls.o: $(SRC)/Dens2KappaCls.cpp $(SRC)/Utilities.hpp $(SRC)/ParameterList.hpp \
@@ -240,12 +211,6 @@ $(OBJ)/flask.o: $(SRC)/flask.cpp $(SRC)/flask_aux.hpp $(SRC)/ParameterList.hpp \
 			$(SRC)/GeneralOutput.hpp $(SRC)/fitsfunctions.hpp $(SRC)/definitions.hpp \
 			$(SRC)/lognormal.hpp $(SRC)/FieldsDatabase.hpp $(SRC)/SelectionFunc.hpp
 	$(COMP) $(VCONTROL) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/flask.cpp -o $@ $(CXXOMP)
-
-$(OBJ)/pyFlask.o: $(SRC)/pyFlask.cpp $(SRC)/flask_aux.hpp $(SRC)/ParameterList.hpp \
-			$(SRC)/Utilities.hpp $(SRC)/gsl_aux.hpp $(SRC)/s2kit10_naive.hpp $(SRC)/Cosmology.hpp \
-			$(SRC)/GeneralOutput.hpp $(SRC)/fitsfunctions.hpp $(SRC)/definitions.hpp \
-			$(SRC)/lognormal.hpp $(SRC)/FieldsDatabase.hpp $(SRC)/SelectionFunc.hpp
-	$(COMP) $(VCONTROL) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/pyFlask.cpp -o $@ $(CXXOMP)
 
 
 $(OBJ)/Spline.o:	$(SRC)/Spline.cpp $(SRC)/Spline.hpp $(SRC)/Utilities.hpp $(SRC)/FieldsDatabase.hpp
@@ -267,8 +232,7 @@ $(OBJ)/flask_aux.o: $(SRC)/flask_aux.cpp $(SRC)/flask_aux.hpp \
 	$(COMP) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/flask_aux.cpp -o $@ $(CXXOMP)
 
 $(OBJ)/fitsfunctions.o: $(SRC)/fitsfunctions.cpp $(SRC)/fitsfunctions.hpp $(SRC)/definitions.hpp
-	sed 's|#define HEALPIX_DATA .*|#define HEALPIX_DATA \"$(HEALDATA)\"|g' $(SRC)/fitsfunctions.cpp > $(OBJ)/fitsfunctions-made.cpp
-	$(COMP) $(CXXHEAL) $(CXXFITS) $(CXXGSL) -fpic -c $(OBJ)/fitsfunctions-made.cpp -o $@
+	$(COMP) $(CXXHEAL) $(CXXFITS) $(CXXGSL) -DHEALPIX_DATA=\"$(HEALDATA)\" -fpic -c $(SRC)/fitsfunctions.cpp -o $@
 
 $(OBJ)/lognormal.o: $(SRC)/lognormal.cpp $(SRC)/lognormal.hpp
 	$(COMP) -fpic -c $(SRC)/lognormal.cpp -o $@
@@ -286,7 +250,7 @@ $(OBJ)/GeneralOutput.o: $(SRC)/GeneralOutput.cpp $(SRC)/GeneralOutput.hpp $(SRC)
 	$(COMP) $(DEFMAP2TGA) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/GeneralOutput.cpp -o $@
 
 $(OBJ)/Cosmology.o: $(SRC)/Cosmology.cpp $(SRC)/Cosmology.hpp $(SRC)/Utilities.hpp $(SRC)/Integral.hpp \
-	$(SRC)/ParameterList.hpp $(SRC)/interpol.h
+	$(SRC)/ParameterList.hpp $(SRC)/interpol.hpp
 	$(COMP) -fpic -c $(SRC)/Cosmology.cpp -o $@
 
 $(OBJ)/Integral.o: $(SRC)/Integral.cpp $(SRC)/Integral.hpp $(SRC)/Utilities.hpp $(SRC)/Cosmology.hpp
@@ -301,13 +265,13 @@ $(OBJ)/gsl_aux.o: $(SRC)/gsl_aux.cpp $(SRC)/gsl_aux.hpp
 $(OBJ)/Utilities.o: $(SRC)/Utilities.cpp $(SRC)/Utilities.hpp
 	$(COMP) -fpic -c $(SRC)/Utilities.cpp -o $@
 
-$(OBJ)/interpol.o: $(SRC)/interpol.c $(SRC)/interpol.h
-	$(COMP) -fpic -c $(SRC)/interpol.c -o $@
+$(OBJ)/interpol.o: $(SRC)/interpol.cpp $(SRC)/interpol.hpp
+	$(COMP) -fpic -c $(SRC)/interpol.cpp -o $@
 
-$(OBJ)/Maximize.o: $(SRC)/Maximize.c $(SRC)/Maximize.h $(SRC)/interpol.h
-	$(COMP) -fpic -c $(SRC)/Maximize.c -o $@
+$(OBJ)/Maximize.o: $(SRC)/Maximize.cpp $(SRC)/Maximize.hpp $(SRC)/interpol.hpp
+	$(COMP) -fpic -c $(SRC)/Maximize.cpp -o $@
 
-$(OBJ)/s2kit10_naive.o: $(SRC)/s2kit10_naive.cpp $(SRC)/s2kit10_naive.hpp $(SRC)/interpol.h $(SRC)/Utilities.hpp
+$(OBJ)/s2kit10_naive.o: $(SRC)/s2kit10_naive.cpp $(SRC)/s2kit10_naive.hpp $(SRC)/interpol.hpp $(SRC)/Utilities.hpp
 	$(COMP) -fpic -c $(SRC)/s2kit10_naive.cpp -o $@ $(CXXOMP)
 
 $(OBJ)/ini_config.o: $(SRC)/ini_config.cpp $(SRC)/ini_config.hpp $(SRC)/handle_ini_format.hpp
@@ -315,13 +279,3 @@ $(OBJ)/ini_config.o: $(SRC)/ini_config.cpp $(SRC)/ini_config.hpp $(SRC)/handle_i
 
 $(OBJ)/handle_ini_format.o: $(SRC)/handle_ini_format.cpp $(SRC)/handle_ini_format.hpp
 	$(COMP) -fpic -c $(SRC)/handle_ini_format.cpp -o $@
-
-$(OBJ)/pyFlask_wrap.o: $(SRC)/pyFlask_wrap.cxx $(SRC)/definitions.hpp $(SRC)/ParameterList.hpp \
-			$(SRC)/Utilities.hpp $(SRC)/gsl_aux.hpp $(SRC)/s2kit10_naive.hpp \
-			$(SRC)/interpol.h $(SRC)/flask_aux.hpp $(SRC)/Cosmology.hpp \
-			$(SRC)/Integral.hpp $(SRC)/GeneralOutput.hpp $(SRC)/SelectionFunc.hpp \
-			$(SRC)/RegularizeCov.hpp $(SRC)/ClProcessing.hpp $(SRC)/Maximize.h \
-			$(SRC)/fitsfunctions.hpp $(SRC)/lognormal.hpp $(SRC)/FieldsDatabase.hpp \
-			$(SRC)/Spline.hpp \
-			$(SRC)/ini_config.hpp $(SRC)/handle_ini_format.hpp
-	$(COMP) $(PYTHON_CXXFLAGS) $(VCONTROL) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/pyFlask_wrap.cxx -o $@

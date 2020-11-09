@@ -18,33 +18,45 @@ Because pyFlask uses shared libraries at the moment, this requires Healpix and L
 ### Flask Compilation
 Edit the `Makefile` in the `src/` subdirectory according to your machine's requirements. If you are using a healpix version bellow 3.60, please pay attention to the `Makefile`.
 In particular, the HEALDIR variable must be set to the location of Healpix installation on your machine.
-The variable PYWRAPLIB1 must be set to the location of the C++ header files relevant to Python on your machine.
 
 From Linux command prompt:
 ```shell
 $ cd <Root directory of Flask>/src/
 $ make
 ```
-This will create...
-(a)
-A linux binary that can be run directly from the command prompt. 
+This will create a linux binary that can be run directly from the command prompt.
 It will be placed in the subdirectory that is defined through the variable BIN in the Makefile.
 This is referred to as "Flask".
-(b) 
-A Python shared object, so that FLASK can be invoked from within Python as a Python module. 
-It will be placed in the subdirectory that is defined through the variable PYF in the Makefile. 
-This is referred to as "pyFlask".
 
-If you don't wish to install the python caller or are having trouble with it, simply run `make cxx` to make just the C++ code.
+### pyFlask Compilation
+Edit the [`setup.cfg`](setup.cfg) configuration file according to your machine's
+requirements. In particular, the `healpix_dir` variable must be set to the
+location of a Healpix installation on your machine. Once everything is set up,
+you can install the pyFlask module as usual with pip:
+
+```shell
+$ cd <Root directory of Flask>/
+$ pip3 install .
+```
+
+Alternatively, you can build the pyFlask module in the working directory:
+
+```shell
+$ cd <Root directory of Flask>/
+$ python3 setup.py build_ext --inplace
+```
+
+This will build the Python module, which is placed in the `py` subdirectory.
+
 
 ### How to run the standard example:
 
+### To run Flask
 Suppose:
 ```makefile
 BIN=<Root directory of Flask>/bin
-PYF=<Root directory of Flask>/py
 ```
-### To run Flask
+Then:
 ```shell
 $ cd <Root directory of Flask>/
 $ bin/flask example.config
@@ -55,12 +67,12 @@ $ bin/flask example.config RNDSEED: 402
 ```
 ### To call pyFlask
 ```python
-$ cd <Root directory of Flask>/
-$ python3
->>> from py import pyFlask
+>>> import pyFlask
 >>> pyFlask.flask(["flask","example.config"])
 ```
 If you want to define, for example, the input parameter RNDSEED=402 from within Python environment, then pyFlask should be invoked from Python as:
 ```python
 >>> pyFlask.flask(["flask","example.ini","RNDSEED:","402"])
 ```
+If pyFlask was build in place, then you need to invoke Python in the `py`
+subdirectory in order for `import pyFlask` to find the module.

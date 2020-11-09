@@ -1,7 +1,7 @@
 #include <gsl/gsl_sf_legendre.h>
 #include <math.h>
 #include "../src/Utilities.hpp"
-#include "../src/interpol.h"           // Interpolation. 
+#include "../src/interpol.hpp"           // Interpolation. 
 #include <stdio.h>
 
 void LegendreC2F(double *C, int maxl, double *F, double *costheta, int ntheta) {

@@ -1,4 +1,4 @@
-#include "interpol.h"
+#include "interpol.hpp"
 #include "Utilities.hpp"
 
 /*** Code based on functions from Numerical Recipes mnbrak and golden.             ***/
