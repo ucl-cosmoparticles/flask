@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "interpol.h"
+#include "interpol.hpp"
 
 /*** Part of interpolation function below ***/
 /*** From Benjamin Joachimi ***/

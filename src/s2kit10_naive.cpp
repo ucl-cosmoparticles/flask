@@ -48,7 +48,7 @@
 #ifndef PI
 #define PI 3.14159265358979
 #endif
-#include "interpol.h"
+#include "interpol.hpp"
 #include "Utilities.hpp"
 #include "s2kit10_naive.hpp"
 

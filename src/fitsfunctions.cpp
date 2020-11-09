@@ -4,8 +4,10 @@
 #include "../src/Utilities.hpp"
 #include "../src/flask_aux.hpp"
 
-// The definition below will be changed by make and the result will be written to a new file:
+// The definition below will be changed by make:
+#ifndef HEALPIX_DATA
 #define HEALPIX_DATA "/path/to/healpix/dir/data"
+#endif
 
 int WriteCatalog2Fits(std::string filename, CAT_PRECISION **table, long Nentries, const ParameterList & config, std::string headerline, bool float32bit) {
   const int COLNAMELENGTH=20;

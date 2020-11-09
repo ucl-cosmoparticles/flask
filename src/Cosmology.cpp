@@ -1,7 +1,7 @@
 #include "Cosmology.hpp"
 #include "Utilities.hpp"
 #include "Integral.hpp"
-#include "interpol.h"
+#include "interpol.hpp"
 #include "ParameterList.hpp"
 #include <math.h>
 
