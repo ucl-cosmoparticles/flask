@@ -74,6 +74,7 @@ class build_flask(build_ext):
                 raise ValueError(f'not a directory: {self.healpix_lib_dir}')
 
             self.library_dirs.append(self.healpix_lib_dir)
+            self.rpath.append(self.healpix_lib_dir)
 
         # healpix_data_dir must be given
         if self.healpix_data_dir is None:
