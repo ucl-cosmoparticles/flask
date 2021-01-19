@@ -990,19 +990,19 @@ int main (int argc, char *argv[]) {
   for (kl=0; kl<Ngalaxies; kl++) for (j=0; j<ncols; j++) catSet[j][kl]=0;
   
   // Find position of entries according to catalog header:
-  theta_pos    = GetSubstrPos("theta"  , CatalogItems); 
+  theta_pos    = GetSubstrPos("theta"  , CatalogItems);
   phi_pos      = GetSubstrPos("phi"    , CatalogItems);
-  ra_pos       = GetSubstrPos("ra"     , CatalogItems); 
+  ra_pos       = GetSubstrPos("ra"     , CatalogItems);
   dec_pos      = GetSubstrPos("dec"    , CatalogItems);
-  z_pos        = GetSubstrPos("z"      , CatalogItems);  
-  r_pos        = GetSubstrPos("r"      , CatalogItems);  
-  galtype_pos  = GetSubstrPos("galtype", CatalogItems);  
-  kappa_pos    = GetSubstrPos("kappa"  , CatalogItems);  
-  gamma1_pos   = GetSubstrPos("gamma1" , CatalogItems);  
-  gamma2_pos   = GetSubstrPos("gamma2" , CatalogItems);  
-  ellip1_pos   = GetSubstrPos("ellip1" , CatalogItems);  
-  ellip2_pos   = GetSubstrPos("ellip2" , CatalogItems);  
-  pixel_pos    = GetSubstrPos("pixel"  , CatalogItems); 
+  z_pos        = GetSubstrPos("z"      , CatalogItems);
+  r_pos        = GetSubstrPos("r"      , CatalogItems);
+  galtype_pos  = GetSubstrPos("galtype", CatalogItems);
+  kappa_pos    = GetSubstrPos("kappa"  , CatalogItems);
+  gamma1_pos   = GetSubstrPos("gamma1" , CatalogItems);
+  gamma2_pos   = GetSubstrPos("gamma2" , CatalogItems);
+  ellip1_pos   = GetSubstrPos("ellip1" , CatalogItems);
+  ellip2_pos   = GetSubstrPos("ellip2" , CatalogItems);
+  pixel_pos    = GetSubstrPos("pixel"  , CatalogItems);
   maskbit_pos  = GetSubstrPos("maskbit", CatalogItems);
 
   // Allow Change of Coordinates if RA and DEC were set as catalog columns:
