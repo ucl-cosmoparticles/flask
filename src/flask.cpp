@@ -975,13 +975,16 @@ int main (int argc, char *argv[]) {
   
   // Using transposed catalog (catalog[col][row]), better for FITS outputting:
   CatalogItems  = config.reads("CATALOG_COLS");
-  CatalogHeader = CatalogItems;                   // The default header if a custom header is not present
-  if (stringexist(config_file_name, "CAT_COL_NAMES:")) CatalogHeader = config.reads("CAT_COL_NAMES");
+  if(config.reads("CAT_COL_NAMES").empty())
+    CatalogHeader = CatalogItems;
+  else
+    CatalogHeader = config.reads("CAT_COL_NAMES");
 
-  //Decide if the floating point numbers to be written in the catalogue are to be in 64-bit (default) or 32-bit format:
-  if (stringexist(config_file_name, "CAT32BIT:")) {        // Check if the keyword for overriding the 64-bit floating point output in binary FITS catalogue exists in the config file
-    if (config.readi("CAT32BIT")==1) float32bit = true;    // If it exists, read its value and decide whether 32-bit floating points are to be written in the binary catalogue
-  }
+  // Read single or double precision
+  if(config.readi("CAT32BIT") == 0)
+    float32bit = false;
+  else
+    float32bit = true;
 
   ncols         = CountWords(CatalogItems);
   catalog       = matrix<CAT_PRECISION>(0,ncols-1, 0,Ngalaxies-1); 
