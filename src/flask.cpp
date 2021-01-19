@@ -813,12 +813,11 @@ int main (int argc, char *argv[]) {
   
   /*** Ellipticity fields ***/
   
-  // Read from the CONFIG file whether shear or reduced shear is to be used for calculating the observed ellipticities:
-  use_shear = false;                     // Default values
-  if (stringexist(config_file_name, "REDUCED_SHEAR:")) {        // Check if the keyword for reduced shear exists in the config file
-    if (config.readi("REDUCED_SHEAR")==1) {use_shear = false;}    // If it exists, read its value and decide whether shear or reduced shear is to be used
-    else if (config.readi("REDUCED_SHEAR")==0) {use_shear = true;}
-  }
+  // Read from config whether shear or reduced shear is to be used for calculating the observed ellipticities:
+  if (config.readi("REDUCED_SHEAR") == 0)
+      use_shear = true;
+  else
+      use_shear = false;
 
   if (config.reads("ELLIP_MAP_OUT")!="0" || config.reads("ELLIPFITS_PREFIX")!="0") {
     Healpix_Map <MAP_PRECISION> *e1Mapf, *e2Mapf;
