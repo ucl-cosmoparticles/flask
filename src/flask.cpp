@@ -53,7 +53,7 @@ int main (int argc, char *argv[]) {
   double *expmu, gvar, gvarl, esig;
   gsl_set_error_handler_off();          // !!! All GSL return messages MUST be checked !!!
   std::string config_file_name;
-  bool use_redu_shear, use_shear;
+  bool use_shear;
 
   
   /**********************************************/
@@ -814,10 +814,10 @@ int main (int argc, char *argv[]) {
   /*** Ellipticity fields ***/
   
   // Read from the CONFIG file whether shear or reduced shear is to be used for calculating the observed ellipticities:
-  use_redu_shear = true; use_shear = false;                     // Default values
+  use_shear = false;                     // Default values
   if (stringexist(config_file_name, "REDUCED_SHEAR:")) {        // Check if the keyword for reduced shear exists in the config file
-    if (config.readi("REDUCED_SHEAR")==1) {use_redu_shear = true; use_shear = false;}    // If it exists, read its value and decide whether shear or reduced shear is to be used
-    else if (config.readi("REDUCED_SHEAR")==0) {use_redu_shear = false; use_shear = true;}
+    if (config.readi("REDUCED_SHEAR")==1) {use_shear = false;}    // If it exists, read its value and decide whether shear or reduced shear is to be used
+    else if (config.readi("REDUCED_SHEAR")==0) {use_shear = true;}
   }
 
   if (config.reads("ELLIP_MAP_OUT")!="0" || config.reads("ELLIPFITS_PREFIX")!="0") {
