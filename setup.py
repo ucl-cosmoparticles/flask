@@ -97,11 +97,11 @@ setup(
     name='pyFlask',
     package_dir={'': 'py'},
     py_modules=['pyFlask'],
-    ext_modules=[Extension('_pyFlask',
+    ext_modules=[Extension('pyFlask',
         language='c++',
         define_macros=[('FLASK_MODULE', None)],
         sources=[
-            'src/pyFlask_wrap.cxx',
+            'src/pyFlask.cpp',
             'src/flask.cpp',
             'src/ParameterList.cpp',
             'src/Utilities.cpp',
