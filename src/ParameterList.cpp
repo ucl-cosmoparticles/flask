@@ -255,12 +255,19 @@ void ParameterList::load (const char *filename) {
   ifstream parfile;
   string word;
   int index;
+  char delim;
+
+  if(std::strlen(filename) > 4 && std::strcmp(filename + (std::strlen(filename)-4), ".ini") == 0)
+    delim = '=';
+  else
+    delim = ':';
+
   parfile.open(filename);
   if (!parfile.is_open()) error("ParameterList::load: cannot open file.");
   
   parloaded=0;
   while (parfile >> word) {
-    if (word[word.size()-1] == ':') {
+    if (word[word.size()-1] == delim) {
       index=findpar(word);          // Lookup parameter in 'ParDef' namespace and get its index.
       if (index>=0) {
 	parloaded++;
