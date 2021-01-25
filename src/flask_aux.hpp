@@ -7,11 +7,21 @@
 #include <math.h>
 #include <gsl/gsl_randist.h> // for ran_redshift function.
 #include "Cosmology.hpp" // for ran_redshift function.
-#include <vec3.h>        // For xyz2ang function.
-#include <pointing.h>    // For xyz2ang function.
-#include <healpix_map.h> // For RandAngInPix function.
-#include <alm.h>         // For Kappa2ShearEmode function.
-#include <xcomplex.h>    // For Kappa2ShearEmode function.
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/vec3.h>        // For xyz2ang function.
+#include <healpix_cxx/pointing.h>    // For xyz2ang function.
+#include <healpix_cxx/healpix_map.h> // For RandAngInPix function.
+#include <healpix_cxx/alm.h>         // For Kappa2ShearEmode function.
+#include <healpix_cxx/xcomplex.h>    // For Kappa2ShearEmode function.
+#else
+#include <vec3.h>
+#include <pointing.h>
+#include <healpix_map.h>
+#include <alm.h>
+#include <xcomplex.h>
+#endif
+
 #include "FieldsDatabase.hpp"
 
 // Auxiliary functions for flask program:

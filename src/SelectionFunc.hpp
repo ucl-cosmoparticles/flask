@@ -3,7 +3,13 @@
 
 #include "definitions.hpp"
 #include "ParameterList.hpp"
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/healpix_map.h>
+#else
 #include <healpix_map.h>
+#endif
+
 #include <gsl/gsl_randist.h>    // Random numbers.
 #include "FieldsDatabase.hpp"
 

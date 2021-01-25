@@ -1,4 +1,9 @@
-#include <healpix_map_fitsio.h> // For FITS files.
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/healpix_map_fitsio.h> // For FITS files.
+#else
+#include <healpix_map_fitsio.h>
+#endif
+
 #include <iomanip>              // For setprecision.
 #include "GeneralOutput.hpp"    // I don't know why, maybe to avoid mismatches.
 #include "Utilities.hpp"        // For warnings, errros and dynamic allocation.

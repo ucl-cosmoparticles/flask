@@ -1,7 +1,13 @@
 #include "SelectionFunc.hpp"
 #include "Utilities.hpp"
 #include "flask_aux.hpp" // For definitions namespace and n2fz function.
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/healpix_map_fitsio.h>
+#else
 #include <healpix_map_fitsio.h>
+#endif
+
 #include "interpol.hpp"
 #include "Maximize.hpp"
 

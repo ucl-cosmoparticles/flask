@@ -1,0 +1,48 @@
+###########################################################
+### Library and header locations for specific computers ###
+###########################################################
+
+# Configure your compiler and library settings below. If your system is
+# set up normally, you most likely do not have to change anything except
+# the HEALPIX path.
+
+# HEALPix root directory -- set if not already set in environment:
+#HEALPIX = /path/to/Healpix_3.60
+
+# What follows are custom settings. Link against specific libraries not by
+# setting XYZ_LIBDIR but instead by providing the XYZ_LIB variables with
+# the full `/path/to/libxyz.so` instead of `-lxyz`.
+
+# Override compiler settings:
+#CXX = g++
+#CXXFLAGS =
+#LDFLAGS =
+
+# Option for debugging with valgrind:
+#CXXFLAGS += -g -O0
+
+# You can override all library settings below. None of it should be necessary.
+# The HEALPix settings will be detected from the HEALPIX directory given above.
+# The rpaths are necessary if you are linking against shared libraries not on
+# the system search path.
+
+# HEALPix and libsharp
+#HEALPIX_DATA = /path/to/data
+#HEALPIX_CFLAGS = /path/to/include
+#HEALPIX_LDFLAGS = -L/path/to/lib -Wl,-rpath,/path/to/lib
+#HEALPIX_LDLIBS = -lhealpix_cxx -lsharp
+
+# GSL
+#GSL_CFLAGS = -I/path/to/include
+#GSL_LDFLAGS = -L/path/to/lib -Wl,-rpath,/path/to/lib
+#GSL_LDLIBS = -lgsl -lgslcblas
+
+# CFITSIO
+#CFITSIO_CFLAGS = -I/path/to/include
+#CFITSIO_LDFLAGS = -L/path/to/lib -Wl,-rpath,/path/to/lib
+#CFITSIO_LDLIBS = -lcfitsio
+
+# OpenMP
+#OMP_CFLAGS = -fopenmp -I/path/to/include
+#OMP_LDFLAGS = -L/path/to/lib -Wl,-rpath,/path/to/lib
+#OMP_LDLIBS = -lgomp

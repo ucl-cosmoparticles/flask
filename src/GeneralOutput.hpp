@@ -2,9 +2,17 @@
 #define GENERALOUTPUT 1
 
 #include "definitions.hpp" // For MAP and ALM _PRECISION. 
-#include <healpix_map.h>   // For RandAngInPix function.
-#include <alm.h>           // For GeneralOutput function.
-#include <xcomplex.h>      // For GeneralOutput function.
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/healpix_map.h>   // For RandAngInPix function.
+#include <healpix_cxx/alm.h>           // For GeneralOutput function.
+#include <healpix_cxx/xcomplex.h>      // For GeneralOutput function.
+#else
+#include <healpix_map.h>
+#include <alm.h>
+#include <xcomplex.h>
+#endif
+
 #include "ParameterList.hpp"
 #include "Utilities.hpp"
 #include <gsl/gsl_matrix.h> // For GSL matrix output.

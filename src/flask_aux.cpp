@@ -3,10 +3,15 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_min.h>
-#include <xcomplex.h>
 #include "fitsfunctions.hpp"
 #include "GeneralOutput.hpp"
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/alm_healpix_tools.h>
+#else
 #include <alm_healpix_tools.h>
+#endif
+
 #include "lognormal.hpp"       // For gmu, gsigma, etc. in PrintMapsStats function.
 #include "definitions.hpp"     // For field types in CountLensingFields.
 

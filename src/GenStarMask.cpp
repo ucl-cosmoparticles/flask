@@ -1,9 +1,17 @@
 #include <iostream>
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/healpix_map.h>
+#include <healpix_cxx/healpix_map_fitsio.h>
+#include <healpix_cxx/rangeset.h>
+#else
 #include <healpix_map.h>
 #include <healpix_map_fitsio.h>
+#include <rangeset.h>
+#endif
+
 #include <gsl/gsl_randist.h>    // Random numbers.
 #include <cmath>
-#include <rangeset.h>
 
 
 int main (int argc, char *argv[]) {

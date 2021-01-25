@@ -8,9 +8,17 @@
 #include <gsl/gsl_linalg.h>     // Cholesky descomposition.
 #include <gsl/gsl_randist.h>    // Random numbers.
 #include <iomanip>              // For 'setprecision'.
+
+#ifndef FLASK_NO_HEALPIX_CXX_INCLUDE_DIR
+#include <healpix_cxx/alm.h>
+#include <healpix_cxx/healpix_map.h>
+#include <healpix_cxx/alm_healpix_tools.h>
+#else
 #include <alm.h>
 #include <healpix_map.h>
 #include <alm_healpix_tools.h>
+#endif
+
 #include <omp.h>                // For OpenMP functions, not pragmas.
 #include <limits.h>             // For finding out max. value of INT variables.
 #include "definitions.hpp"      // Global variables and #defines.

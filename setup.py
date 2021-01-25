@@ -45,14 +45,6 @@ class build_flask(build_ext):
             if not os.path.isdir(self.healpix_dir):
                 raise ValueError(f'not a directory: {self.healpix_dir}')
 
-            # infer include directory if not given explicitly
-            if self.healpix_include_dir is None:
-                self.healpix_include_dir = os.path.join(self.healpix_dir, 'include', 'healpix_cxx')
-
-            # infer lib directory if not given explicitly
-            if self.healpix_lib_dir is None:
-                self.healpix_lib_dir = os.path.join(self.healpix_dir, 'lib')
-
             # infer data directory if not given explicitly
             if self.healpix_data_dir is None:
                 self.healpix_data_dir = os.path.join(self.healpix_dir, 'data')
@@ -101,7 +93,7 @@ setup(
         language='c++',
         define_macros=[('FLASK_MODULE', None)],
         sources=[
-            'src/pyFlask.cpp',
+            'py/pyFlask.cpp',
             'src/flask.cpp',
             'src/ParameterList.cpp',
             'src/Utilities.cpp',
