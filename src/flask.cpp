@@ -842,7 +842,7 @@ int main (int argc, char *argv[]) {
 	    e1Mapf[i].SetNside(nside,RING);  e2Mapf[i].SetNside(nside,RING);
 	    sprintf(message, "Generating ellipticity for f%dz%d...", f, z); filename.assign(message); 
 	    Announce(filename);
-#pragma omp parallel for schedule(static) private(k)
+#pragma omp parallel for schedule(static) private(k, shearopt1, shearopt2)
 	    for(m=0; m<npixels; m++) {
 	      k = omp_get_thread_num()+1;
 	      // Mask ellipticity map at galaxy-free pixels:
