@@ -1,6 +1,6 @@
 #include "ParameterList.hpp"    // Configuration and input system.
 #include "Utilities.hpp"        // Error handling and memory allocation.
-#include "s2kit10_naive.hpp"    // For Discrete Legendre Transforms.
+#include "transformcl.hpp"
 #include <gsl/gsl_matrix.h>     // gsl_matrix.
 #include <math.h>               // exp, log...
 #include "GeneralOutput.hpp"
@@ -10,7 +10,25 @@
 #include "FieldsDatabase.hpp"   
 #include "fitsfunctions.hpp"    // For ReadHealpixData function used for Healpix pixel window function.
 #include "Spline.hpp"           // For applying Healpix window function to arbitrarily spaced C(l)s.
+#include "interpol.hpp"
 
+
+
+/*** Exponential suppression of C_l to avoid oscillations in Xi ***/
+double suppress(double l, double lsup, double supindex) {
+  return exp( -1.0*pow(l/lsup, supindex) );
+}
+
+
+/*** Interpolates the input Cls to get a C_l for each l, from 0 to lmax ***/
+void GetAllLs(double *ll, double *Clin, int Clinsize, double *Clout, int lmax, int extrapol) {
+  int l;
+
+                                Clout[0] = 0.0; // Set monopole to zero.
+  if (ll[0]>1.0 && extrapol==0) Clout[1] = 0.0; // If not present, set dipole to zero too.
+  else                          Clout[1] = Interpol(ll, Clinsize, Clin, 1.0);
+  for(l=2; l<=lmax; l++)        Clout[l] = Interpol(ll, Clinsize, Clin, (double)l);
+}
 
 
 /*** Multiplies a C(l) by a constant factor ***/
@@ -417,7 +435,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
   if (config.readi("CROP_CL")==1) lastl=lmax;
   else if (config.readi("CROP_CL")!=0) warning("ClProcess: unknown CROP_CL option, will assume CROP_CL=0.");
   cout << "Maximum l in transformation: "<<lastl<<endl;
-  Nls=lastl+1; // l=0 is needed for DLT. Nls is known as 'bandwidth' (bw) in s2kit 1.0 code.
+  Nls=lastl+1; // l=0 is needed for DLT.
   (*NlsOut)=Nls;
     
   // Allocate gsl_matrices that will receive covariance matrices for each l.
@@ -430,26 +448,10 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
   /*****************************************************************/
   /*** PART 2: Compute auxiliary gaussian C(l)s if LOGNORMAL     ***/
   /*****************************************************************/
-  double *tempCl, *LegendreP, *workspace, *xi, *theta, *DLTweights, *lls;
+  double *tempCl, *xi, *theta, *lls;
 
   if (dist==lognormal) {
     cout << "LOGNORMAL realizations: will compute auxiliary gaussian C(l)s:\n";
-    // Loads necessary memory:
-    Announce("Allocating memory for DLT... ");
-    workspace  = vector<double>(0, 16*Nls-1);
-    LegendreP  = vector<double>(0, 2*Nls*Nls-1);
-    DLTweights = vector<double>(0, 4*Nls-1);
-    Announce();
-    
-    // Load s2kit 1.0 Legendre Polynomials:
-    Announce("Generating table of Legendre polynomials... ");
-    PmlTableGen(Nls, 0, LegendreP, workspace);
-    free_vector(workspace, 0, 16*Nls-1);
-    Announce();
-    // Compute s2kit 1.0 Discrete Legendre Transform weights:
-    Announce("Calculating forward DLT weights... ");
-    makeweights(Nls, DLTweights);
-    Announce();
   }
 
   // Vector of ells is only necessary for output:
@@ -462,24 +464,22 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
   // Angle theta is only necessary for output:
   if (config.reads("XIOUT_PREFIX")!="0" || config.reads("GXIOUT_PREFIX")!="0") {
     Announce("Generating table of sampling angles... ");
-    theta    = vector<double>(0, 2*Nls-1);
-    ArcCosEvalPts(2*Nls, theta);
-    for (i=0; i<2*Nls; i++) theta[i] = theta[i]*180.0/M_PI;
+    theta    = vector<double>(0, lastl);
+    for (i=0; i<Nls; i++) theta[i] = (i+0.5)/Nls*180.0;
     Announce();
   } 
 
   // LOOP over all C(l)s already set.
   if (dist==lognormal) Announce("Transforming C(l)s for the auxiliary Gaussian ones... ");
   else Announce("Interpolating C(l)s for all l's... ");
-#pragma omp parallel for schedule(dynamic) private(tempCl, xi, workspace, filename, l, i, j)
+#pragma omp parallel for schedule(dynamic) private(tempCl, xi, filename, l, i, j)
   for (k=0; k<Nfields*Nfields; k++) {
     i=k/Nfields;  j=k%Nfields;
     if (IsSet[i][j]==1) {
       
       // Temporary memory allocation:
       tempCl    = vector<double>(0, lastl);
-      xi        = vector<double>(0, 2*Nls-1);
-      workspace = vector<double>(0, 2*Nls-1);
+      xi        = vector<double>(0, lastl);
 
       // Interpolate C(l) for every l; input C(l) might not be like that:
       GetAllLs(ll[i][j], Cov[i][j], NentMat[i][j], tempCl, lastl, config.readi("EXTRAP_DIPOLE"));
@@ -487,23 +487,21 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
       if (dist==lognormal) {              /** LOGNORMAL ONLY **/
 	
 	// Compute correlation function Xi(theta):
-	ModCl4DLT(tempCl, lastl, -1, -1);
-	Naive_SynthesizeX(tempCl, Nls, 0, xi, LegendreP);
+	flask::cltoxi(Nls, tempCl, xi);
 	if (config.reads("XIOUT_PREFIX")!="0") { // Write it out if requested:
-	  filename=PrintOut(config.reads("XIOUT_PREFIX"), i, j, fieldlist, theta, xi, 2*Nls);
+	  filename=PrintOut(config.reads("XIOUT_PREFIX"), i, j, fieldlist, theta, xi, Nls);
 	}
 
 	// Transform Xi(theta) to auxiliary gaussian Xi(theta):
-	status=GetGaussCorr(xi, xi, 2*Nls, fieldlist.mean(i), fieldlist.shift(i), fieldlist.mean(j), fieldlist.shift(j));
+	status=GetGaussCorr(xi, xi, Nls, fieldlist.mean(i), fieldlist.shift(i), fieldlist.mean(j), fieldlist.shift(j));
 	if (status==EDOM) error("ClProcess: GetGaussCorr found bad log arguments.");
 	if (i==j && xi[0]<0) warning("ClProcess: auxiliary field variance is negative.");
 	if (config.reads("GXIOUT_PREFIX")!="0") { // Write it out if requested:
-	  filename=PrintOut(config.reads("GXIOUT_PREFIX"), i, j, fieldlist, theta, xi, 2*Nls);
+	  filename=PrintOut(config.reads("GXIOUT_PREFIX"), i, j, fieldlist, theta, xi, Nls);
 	}
 
 	// Transform Xi(theta) back to C(l):
-	Naive_AnalysisX(xi, Nls, 0, DLTweights, tempCl, LegendreP, workspace);
-	ApplyClFactors(tempCl, Nls);
+	flask::xitocl(Nls, xi, tempCl);
 	if (config.reads("GCLOUT_PREFIX")!="0") { // Write it out if requested:
 	  filename=PrintOut(config.reads("GCLOUT_PREFIX"), i, j, fieldlist, lls, tempCl, Nls);
 	}	  
@@ -514,8 +512,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
 	
       // Temporary memory deallocation:
       free_vector(tempCl, 0, lastl);
-      free_vector(xi, 0, 2*Nls-1);
-      free_vector(workspace, 0, 2*Nls-1);
+      free_vector(xi, 0, lastl);
     } // End of IF C(l)[i,j] is set.
   } // End of LOOP over C(l)[i,j] that were set.
   Announce();
@@ -524,7 +521,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
   free_tensor3(Cov,    0, Nfields-1, 0, Nfields-1, 0, Nlinput); 
   free_tensor3(ll,     0, Nfields-1, 0, Nfields-1, 0, Nlinput); 
   free_matrix(NentMat, 0, Nfields-1, 0, Nfields-1);
-  if (config.reads("XIOUT_PREFIX")!="0" || config.reads("GXIOUT_PREFIX")!="0") free_vector(theta, 0, 2*Nls-1);
+  if (config.reads("XIOUT_PREFIX")!="0" || config.reads("GXIOUT_PREFIX")!="0") free_vector(theta, 0, lastl);
 
   // Output information:
   if (config.reads("XIOUT_PREFIX")!="0") 
@@ -683,7 +680,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
       for (i=0; i<=lastl; i++) for (j=0; j<=NCls; j++) auxMatrix[i][j]=0;
     }
     // LOOP over fields:
-#pragma omp parallel for schedule(dynamic) private(tempCl, xi, workspace, filename, l, m, i, j, n)
+#pragma omp parallel for schedule(dynamic) private(tempCl, xi, filename, l, m, i, j, n)
     for (k=0; k<NCls; k++) {
       l = (int)((sqrt(8.0*(NCls-1-k)+1.0)-1.0)/2.0);
       m = NCls-1-k-(l*(l+1))/2;
@@ -696,19 +693,15 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
 	
       if (dist==lognormal) {
 	// Temporary memory allocation:
-	xi        = vector<double>(0, 2*Nls-1);
-	workspace = vector<double>(0, 2*Nls-1);
+	xi        = vector<double>(0, lastl);
 	// Compute correlation function Xi(theta):
-	ModCl4DLT(tempCl, lastl, -1, -1); // Suppression not needed (it was already suppressed).
-	Naive_SynthesizeX(tempCl, Nls, 0, xi, LegendreP);
+	flask::cltoxi(Nls, tempCl, xi); // Suppression not needed (it was already suppressed).
 	// Get Xi(theta) for lognormal variables:
-	GetLNCorr(xi, xi, 2*Nls, fieldlist.mean(i), fieldlist.shift(i), fieldlist.mean(j), fieldlist.shift(j));
+	GetLNCorr(xi, xi, Nls, fieldlist.mean(i), fieldlist.shift(i), fieldlist.mean(j), fieldlist.shift(j));
 	// Compute the Cls:
-	Naive_AnalysisX(xi, Nls, 0, DLTweights, tempCl, LegendreP, workspace);
-	ApplyClFactors(tempCl, Nls, -1, -1);
+	flask::xitocl(Nls, xi, tempCl);
 	// Temporary memory deallocation:
-	free_vector(xi, 0, 2*Nls-1);
-	free_vector(workspace, 0, 2*Nls-1);
+	free_vector(xi, 0, lastl);
       }
       
       // Output regularized Cls or prepare for output:
@@ -748,12 +741,6 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
 
   // Freeing memory: from now on we only need CovByl, means, shifts.
   if (config.reads("GCLOUT_PREFIX")!="0" || config.reads("REG_CL_PREFIX")!="0") free_vector(lls, 0, lastl);
-  if (dist==lognormal) {
-    Announce("DLT memory deallocation... ");
-    free_vector(LegendreP, 0, 2*Nls*Nls-1);
-    free_vector(DLTweights, 0, 4*Nls-1); 
-    Announce();
-  }
 
   // Exit if this is the last output requested:
   if (ExitAt=="REG_CL_PREFIX") return 1;
