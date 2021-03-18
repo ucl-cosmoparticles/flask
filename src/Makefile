@@ -180,14 +180,14 @@ $(BIN)/GenStarMask: $(OBJ)/GenStarMask.o
 	$(COMP) $(LDHEAL) $(LDFITS) $(LDGSL) $(OBJ)/GenStarMask.o -o $@ $(LIBS)
 
 $(BIN)/flask: $(OBJ)/flask.o $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
-			$(OBJ)/gsl_aux.o $(OBJ)/s2kit10_naive.o $(OBJ)/interpol.o \
+			$(OBJ)/gsl_aux.o $(OBJ)/interpol.o \
 			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
 			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
 			$(OBJ)/ClProcessing.o $(OBJ)/Maximize.o $(OBJ)/fitsfunctions.o \
 			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
 			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o
 	$(COMP) $(LDHEAL) $(LDFITS) $(LDGSL) $(OBJ)/flask.o $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
-			$(OBJ)/gsl_aux.o $(OBJ)/s2kit10_naive.o $(OBJ)/interpol.o \
+			$(OBJ)/gsl_aux.o $(OBJ)/interpol.o \
 			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
 			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
 			$(OBJ)/ClProcessing.o $(OBJ)/Maximize.o $(OBJ)/fitsfunctions.o \
@@ -207,7 +207,7 @@ $(OBJ)/GenStarMask.o: $(SRC)/GenStarMask.cpp
 	$(COMP) $(CXXHEAL) $(CXXGSL) -c $(SRC)/GenStarMask.cpp -o $@ $(CXXOMP)
 
 $(OBJ)/flask.o: $(SRC)/flask.cpp $(SRC)/flask_aux.hpp $(SRC)/ParameterList.hpp \
-			$(SRC)/Utilities.hpp $(SRC)/gsl_aux.hpp $(SRC)/s2kit10_naive.hpp $(SRC)/Cosmology.hpp \
+			$(SRC)/Utilities.hpp $(SRC)/gsl_aux.hpp $(SRC)/Cosmology.hpp \
 			$(SRC)/GeneralOutput.hpp $(SRC)/fitsfunctions.hpp $(SRC)/definitions.hpp \
 			$(SRC)/lognormal.hpp $(SRC)/FieldsDatabase.hpp $(SRC)/SelectionFunc.hpp
 	$(COMP) $(VCONTROL) $(DEFCOMPLEX) $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/flask.cpp -o $@ $(CXXOMP)
@@ -220,9 +220,9 @@ $(OBJ)/FieldsDatabase.o: $(SRC)/FieldsDatabase.cpp $(SRC)/FieldsDatabase.hpp $(S
 	 $(COMP) -fpic -c $(SRC)/FieldsDatabase.cpp -o $@ $(CXXOMP)
 
 $(OBJ)/ClProcessing.o: $(SRC)/ClProcessing.cpp $(SRC)/ClProcessing.hpp $(SRC)/Utilities.hpp \
-			$(SRC)/s2kit10_naive.hpp $(SRC)/GeneralOutput.hpp $(SRC)/RegularizeCov.hpp \
+			$(SRC)/interpol.hpp $(SRC)/GeneralOutput.hpp $(SRC)/RegularizeCov.hpp \
 			$(SRC)/flask_aux.hpp $(SRC)/FieldsDatabase.hpp $(SRC)/Spline.hpp \
-			$(SRC)/fitsfunctions.hpp
+			$(SRC)/fitsfunctions.hpp $(SRC)/transformcl.hpp
 	$(COMP)  $(CXXHEAL) $(CXXGSL) -fpic -c $(SRC)/ClProcessing.cpp -o $@ $(CXXOMP)
 
 $(OBJ)/flask_aux.o: $(SRC)/flask_aux.cpp $(SRC)/flask_aux.hpp \
@@ -270,9 +270,6 @@ $(OBJ)/interpol.o: $(SRC)/interpol.cpp $(SRC)/interpol.hpp
 
 $(OBJ)/Maximize.o: $(SRC)/Maximize.cpp $(SRC)/Maximize.hpp $(SRC)/interpol.hpp
 	$(COMP) -fpic -c $(SRC)/Maximize.cpp -o $@
-
-$(OBJ)/s2kit10_naive.o: $(SRC)/s2kit10_naive.cpp $(SRC)/s2kit10_naive.hpp $(SRC)/interpol.hpp $(SRC)/Utilities.hpp
-	$(COMP) -fpic -c $(SRC)/s2kit10_naive.cpp -o $@ $(CXXOMP)
 
 $(OBJ)/ini_config.o: $(SRC)/ini_config.cpp $(SRC)/ini_config.hpp $(SRC)/handle_ini_format.hpp
 	$(COMP) -fpic -c $(SRC)/ini_config.cpp -o $@
