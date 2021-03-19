@@ -84,11 +84,11 @@ void xitocl(unsigned int n, const T* xi, T* cl)
     // first row
     a = TWO_PI;
     b = a;
-    cl[0] = b/2*cl[0];
+    cl[0] = b*cl[0];
     for(k = 2; k < n; k += 2)
     {
         b *= (k-THREE)/(k+ONE);
-        cl[0] += b*cl[k];
+        cl[0] += 2*b*cl[k];
     }
 
     // remaining rows
