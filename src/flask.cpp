@@ -149,7 +149,7 @@ int main (int argc, char *argv[]) {
       j=0; // Will count number of Cholesky failures.
       for (l=lmin; l<=lmax; l++) {
 	//cout << "** Working with cov. matrix for l="<<l<<":\n";
-	status = gsl_linalg_cholesky_decomp(CovByl[l]);
+	status = gsl_linalg_cholesky_decomp1(CovByl[l]);
 	if (status==GSL_EDOM) { 
 	  sprintf(message,"Cholesky decomposition failed: cov. matrix for l=%d is not positive-definite.", l); 
 	  warning(message); j++; 
@@ -273,12 +273,12 @@ int main (int argc, char *argv[]) {
     
       // Generate independent 1sigma complex random variables:
       if (m==0) for (i=0; i<Nfields; i++) {
-	  gaus0[k][i][0] = gsl_ran_gaussian(rnd[k], 1.0);
+	  gaus0[k][i][0] = gsl_ran_gaussian_ziggurat(rnd[k], 1.0);
 	  gaus0[k][i][1] = 0.0;
 	}                                                      // m=0 are real, so real part gets all the variance.
       else      for (i=0; i<Nfields; i++) {
-	  gaus0[k][i][0] = gsl_ran_gaussian(rnd[k], OneOverSqr2);
-	  gaus0[k][i][1] = gsl_ran_gaussian(rnd[k], OneOverSqr2);
+	  gaus0[k][i][0] = gsl_ran_gaussian_ziggurat(rnd[k], OneOverSqr2);
+	  gaus0[k][i][1] = gsl_ran_gaussian_ziggurat(rnd[k], OneOverSqr2);
 	}
     
       // Generate correlated complex gaussian variables according to CovMatrix:
