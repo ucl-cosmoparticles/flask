@@ -45,6 +45,7 @@ int main (int argc, char *argv[]) {
   std::string filename, ExitAt;
   std::ofstream outfile;                                // File for output.
   simtype dist;                                         // For specifying simulation type.
+  bool suppressVar;                                     // Fields with suppressed variance.
   gsl_matrix **CovByl; 
   int status, i, j, k, l, m, Nf, Nz, f, z, Nfields, Nls, MaxThreads;
   long long1, long2;
@@ -88,6 +89,8 @@ int main (int argc, char *argv[]) {
   else if (config.reads("DIST")=="GAUSSIAN")    dist=gaussian;
   else if (config.reads("DIST")=="HOMOGENEOUS") dist=homogeneous;
   else error("flask: unknown DIST: "+config.reads("DIST"));
+  // - Suppress variance:
+  suppressVar = config.readi("SUPPRESS_VAR");
  
 
   /***********************************/
@@ -131,6 +134,15 @@ int main (int argc, char *argv[]) {
 	warning("flask: requested LRANGE upper bound is beyond input data, will use existing data instead.");
       }
       cout << "Will use "<<lmin<<" <= l <= "<<lmax<<endl;
+
+      // Modify covariance matrices if suppressing variance
+      if (suppressVar) {
+        Announce("Update cov. matrices for suppressed variance... ");
+        for (l=lmin; l<=lmax; l++) {
+            suppressed_cov_matrix(Nfields, CovByl[l]->data);
+        }
+        Announce();
+      }
 
       // Cholesky decomposition:
       Announce("Performing Cholesky decompositions of cov. matrices... ");
@@ -272,6 +284,27 @@ int main (int argc, char *argv[]) {
       // Generate correlated complex gaussian variables according to CovMatrix:
       CorrGauss(gaus1[k], CovByl[l], gaus0[k]);
   
+      // Suppress variance if requested
+      if(suppressVar) {
+
+          for (i=0; i<Nfields; i++) {
+            // normalise
+            const double norm = hypot(gaus1[k][i][0], gaus1[k][i][1]);
+            gaus1[k][i][0] /= norm;
+            gaus1[k][i][1] /= norm;
+
+            // compute sqrt(Cl) from Cholesky decomposition
+            double scale = 0;
+            for(int ii=0; ii<=i; ++ii)
+                scale += (CovByl[l]->data[i*Nfields+ii])*(CovByl[l]->data[i*Nfields+ii]);
+            scale = sqrt(scale);
+
+            // rescale modes by sqrt(Cl)
+            gaus1[k][i][0] *= scale;
+            gaus1[k][i][1] *= scale;
+        }
+      }
+
       // Save alm to tensor:
       for (i=0; i<Nfields; i++) {
 #if USEXCOMPLEX // For compatibility with Healpix versions <=3.20 and >=v3.30.          

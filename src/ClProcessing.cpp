@@ -57,6 +57,41 @@ int GetGaussCorr(double *gXi, double *lnXi, int XiLength, double mean1, double s
 }
 
 
+// transform Cl covariance matrix to suppressed covariance matrix
+// uses an order (5, 4) Pade approximation of the true relation near 0
+void suppressed_cov_matrix(int n, double* c)
+{
+    // constants of the rational polynomial approximation
+    const double p1 = /* 4 pi4 = */ 389.63636413600974894576133075482044499891034269074;
+    const double p2 = /* -28 pi2 = */ -276.34892323050204132736574799653223178878358340274;
+    const double p3 = /* 32 = */ 32.;
+    const double q1 = /* pi5 = */ 306.01968478528145326274131004343560648030070662807;
+    const double q2 = /* -5 pi4 = */ -155.03138340149910087738157533550697601112644282943;
+    const double q3 = /* -2 pi = */ -6.2831853071795864769252867665590057683943387987502;
+
+    // convert each off-diagonal element
+    for(int i = 0; i < n; ++i)
+    {
+        const double cii = c[i*(n+1)];
+
+        for(int j = 0; j < n; ++j)
+        {
+            // only alter off-diagonal entries
+            if(i != j)
+            {
+                const double cjj = c[j*(n+1)];
+
+                // correlation coefficient squared
+                const double x = (c[i*n+j]*c[i*n+j])/(cii*cjj);
+
+                // perform the change using the Pade approximant
+                c[i*n+j] *= (p1 + x*(p2 + x*p3))/(q1 + x*(q2 + x*q3));
+            }
+        }
+    }
+}
+
+
 // Function that returns a Cl label according to two Fields i and j:
 std::string Fields2Label(int i, int j, const FZdatabase & fieldlist) {
   int af, az, bf, bz;
