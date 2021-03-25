@@ -16,7 +16,6 @@ http://stackoverflow.com/questions/12963446/how-to-calculate-the-average-of-seve
 """
 
 from contextlib import contextmanager
-from itertools import imap, izip
 from glob import iglob
 from math import sqrt
 from sys import exit, argv
@@ -37,13 +36,13 @@ def multi_file_manager(files, mode='rt'):
 def read_values(file):
     for line in file:
         if not line.startswith("#"):                # skip comments.  
-            for value in imap(float, line.split()): # might only need 'int' here
+            for value in map(float, line.split()): # might only need 'int' here
                 yield value
 
 # enumerate multiple egual length iterables simultaneously as (i. n0, n1, ...)
 def multi_enumerate(start, *iterables):
     # returns generator
-    return ((n,)+t for n, t in enumerate(izip(*iterables), start))
+    return ((n,)+t for n, t in enumerate(zip(*iterables), start))
 
 
 # Beggining of the main code:
@@ -57,7 +56,7 @@ devfile  = argv.pop(0)        # Third is the file output for the standard deviat
 with multi_file_manager(argv) as datfiles:
     num_files = len(datfiles)
     if num_files < 2:
-        print 'Less than 2 .dat files were found to process, terminating.'
+        print('Less than 2 .dat files were found to process, terminating.')
         sys.exit(1)
 
     # determine number of rows and cols from first file
@@ -67,21 +66,21 @@ with multi_file_manager(argv) as datfiles:
     num_cols = len(temp[0])
     del temp  # no longer needed
     datfiles[0].seek(0)  # rewind first file
-    print 'Found {0} .dat files, each {1} rows x {2} cols'.format(num_files, num_rows, num_cols)
-    print 'Will write their means to', meanfile, 'and their deviations to', devfile
+    print('Found {0} .dat files, each {1} rows x {2} cols'.format(num_files, num_rows, num_cols))
+    print('Will write their means to', meanfile, 'and their deviations to', devfile)
     means  = []  # initialize
     sigmas = []  # standard deviations
     generators = [read_values(file) for file in datfiles]
-    for j in xrange(num_rows):  # main loop
-        for i in xrange(num_cols):
+    for j in range(num_rows):  # main loop
+        for i in range(num_cols):
             values = map(next, generators)  # next cell value from each file
             mean = float(sum(values)) / num_files
             means.append(mean)
-            means_diff_sq = imap(lambda value: (value-mean)**2, values)
+            means_diff_sq = map(lambda value: (value-mean)**2, values)
             sigma = sqrt(sum(means_diff_sq) / (num_files-1)) # Corrected to give unbiased sample standard deviation.
             sigmas.append(sigma)
 
-print 'Calculating means and deviations...'
+print('Calculating means and deviations...')
 with open(meanfile, 'wt') as averages:
     with open(devfile, 'wt') as deviations:
         for i, mean, sigma in multi_enumerate(0, means, sigmas):
@@ -93,6 +92,6 @@ with open(meanfile, 'wt') as averages:
             else:
                 averages.write('\n')
                 deviations.write('\n')       
-print 'done.'
-print
+print('done.')
+print()
 

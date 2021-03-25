@@ -22,15 +22,15 @@ for i in range(0, len(fname)):
         nSigma  = (obsMean-mean[i])/obsDev
         if np.abs(nSigma)>3:
             name = 'f{}z{}:'.format(int(fname[i]),int(zname[i]))
-            print name
-            print 'Deviation from expected mean:', nSigma
+            print(name)
+            print('Deviation from expected mean:', nSigma)
             pl.hist(Map[2+i]-mean[i], bins=100, label=name)
             pl.legend()
             pl.show()
     else:
         if np.all(Map[2+i]==mean[i])==False:
-            print '!! Field is not homogeneous !!'
-            print 'Mean Obs:', obsMean, 'Mean Exp:', mean[i]
+            print('!! Field is not homogeneous !!')
+            print('Mean Obs:', obsMean, 'Mean Exp:', mean[i])
     if dist=='LOGNORMAL' and obsMin<-shift[i]:
-        print '!! Minimum value beyond expected !!'
-        print 'Min Obs:', obsMin, 'Min Exp:', -shift[i]
+        print('!! Minimum value beyond expected !!')
+        print('Min Obs:', obsMin, 'Min Exp:', -shift[i])

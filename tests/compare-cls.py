@@ -49,7 +49,7 @@ for theoFile in sortedTheoFiles:
         theols=l
     else:
         if np.all(theols==l)==False:
-            print "ERROR: Theoretical Cls do not have all the same ells"
+            print("ERROR: Theoretical Cls do not have all the same ells")
             sys.exit(1)
 
 # Load mean recovered Cls and standard deviation:
@@ -78,7 +78,7 @@ for i in range(0, len(theoCls)):
     nSfinal = np.mean(nSigmaCls[i])/np.std(nSigmaCls[i])*np.sqrt(len(nSigmaCls[i])-1)
     if np.abs(nSfinal)>5:
         name = sortedTheoFiles[i]
-        print name, '-- Avg. dev. (sigma units):', nSfinal
+        print(name, '-- Avg. dev. (sigma units):', nSfinal)
         YesPlot = True
         pl.errorbar(meanl, nSigmaCls[i], yerr=1, fmt='o', label=name)
 if YesPlot==True:
@@ -97,10 +97,10 @@ if 1==0:
 # Plots of difference between mean of recovered Cls and original Cls (regularized ones):
 if 1==0:
     for i in range(0,5):
-        print sortedTheoFiles[i]
+        print(sortedTheoFiles[i])
         pl.errorbar(meanCls[0,meanIni:meanFin+1], (meanCls[1:,meanIni:meanFin+1]-np.array(theoCls)[: ,theoIni:theoFin+1])[i]/((devCls[1:,meanIni:meanFin+1])[i] / np.sqrt(Nsample)), yerr=1, fmt='.', label=sortedTheoFiles[i])
     for i in range(5,10):
-        print sortedTheoFiles[i]
+        print(sortedTheoFiles[i])
         pl.errorbar(meanCls[0,meanIni:meanFin+1], (meanCls[1:,meanIni:meanFin+1]-np.array(theoCls)[: ,theoIni:theoFin+1])[i]/((devCls[1:,meanIni:meanFin+1])[i] / np.sqrt(Nsample)), yerr=1, fmt='o', label=sortedTheoFiles[i])
     pl.plot(meanCls[0,meanIni:meanFin+1], np.zeros(len(meanCls[0,meanIni:meanFin+1])))
     pl.legend(loc='lower left')
@@ -108,7 +108,7 @@ if 1==0:
 
 # Plot histogram of deviations:
 if 1==0:
-    print np.shape(nSigmaCls)
+    print(np.shape(nSigmaCls))
     pl.hist(nSigmaCls.flatten(),bins=50)
     pl.show()
 

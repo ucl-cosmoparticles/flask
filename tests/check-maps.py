@@ -29,13 +29,13 @@ OnlyLens = np.all(ftype==2)
 # Loads mask:
 def GetMask(File,Type):
     if Type==1 or OnlyLens==True:
-        return hp.read_map(File, verbose=False)
+        return hp.read_map(File, verbose=False, dtype=None)
     else:
         return np.ones(Npix)
 if separable==0:
     mask = [GetMask(MaskFile+'f'+str(int(fname[i]))+'z'+str(int(zname[i]))+'.fits', ftype[i]) for i in range(0,len(fname))]
 if separable==1:
-    mask = [hp.read_map(MaskFile, verbose=False) for i in range(0,len(fname))]
+    mask = [hp.read_map(MaskFile, verbose=False, dtype=None) for i in range(0,len(fname))]
 if separable==2:
     mask = [GetMask(MaskFile+'f'+str(int(fname[i]))+'.fits', ftype[i]) for i in range(0,len(fname))]
 
@@ -58,10 +58,10 @@ if separable!=0:
     GalPerPix = [nzInt(i) for i in range(0,len(fname))]
 
 # Loads star mask:
-starmask = hp.read_map(StarFile,verbose=False)
+starmask = hp.read_map(StarFile,verbose=False, dtype=None)
 
 # Loads maps:
-Map = [hp.read_map(mapPrefix+'f'+str(int(fname[i]))+'z'+str(int(zname[i]))+'.fits', verbose=False) for i in range(0,len(fname))]
+Map = [hp.read_map(mapPrefix+'f'+str(int(fname[i]))+'z'+str(int(zname[i]))+'.fits', verbose=False, dtype=None) for i in range(0,len(fname))]
 
 
 
@@ -75,7 +75,7 @@ fullmask = [m*starmask for m in mask]
 for i in range(0, len(fname)):
     if (ftype[i]==1 or separable==1):
         if (np.all(Map[i][fullmask[i]==0]==0) or np.all(Map[i][fullmask[i]==0]==hp.UNSEEN))==False:
-            print '!! ERROR: map f{}z{} has regions that should be masked and are not !!'.format(fname[i],zname[i])
+            print('!! ERROR: map f{}z{} has regions that should be masked and are not !!'.format(fname[i],zname[i]))
 
 # Test that galaxies are sampled properly:
 for i in range(0, len(fname)):
@@ -85,11 +85,11 @@ for i in range(0, len(fname)):
         #pl.show()
         sample = residual[fullmask[i]>0]
         if np.abs(np.mean(sample)/(np.std(sample)/np.sqrt(len(sample)-1)))>7:
-            print 'Found excess of difference in the mean: f{}z{}'.format(int(fname[i]),int(zname[i]))
-            print 'Observed mean dev:  {:.3f}'.format(np.std(sample)/np.sqrt(len(sample)-1))
-            print 'Expected density:  {:.3f}'.format(SelScale*GalPerPix[i]*np.mean(fullmask[i][fullmask[i]>0]))
-            print 'Observed density:  {:.3f}'.format(np.mean(Map[i][fullmask[i]>0]))
-            print 'Num. of sigma:     {:.3f}'.format(np.mean(sample)/(np.std(sample)/np.sqrt(len(sample)-1)))
+            print('Found excess of difference in the mean: f{}z{}'.format(int(fname[i]),int(zname[i])))
+            print('Observed mean dev:  {:.3f}'.format(np.std(sample)/np.sqrt(len(sample)-1)))
+            print('Expected density:  {:.3f}'.format(SelScale*GalPerPix[i]*np.mean(fullmask[i][fullmask[i]>0])))
+            print('Observed density:  {:.3f}'.format(np.mean(Map[i][fullmask[i]>0])))
+            print('Num. of sigma:     {:.3f}'.format(np.mean(sample)/(np.std(sample)/np.sqrt(len(sample)-1))))
             pl.hist(sample, bins=np.arange(-np.floor(np.max(SelScale*GalPerPix[i]*fullmask[i])), \
                                              np.ceil(np.max(Map[i]))))
             pl.show()

@@ -8,7 +8,7 @@ echo "** TEST $testN **"
 
 # Check Cl processing and output:
 echo     "Outputting Cl preparation files..."
-../bin/flask test${testN}.config FLIST_OUT: tout${testN}_flist.txt SMOOTH_CL_PREFIX: tout${testN}_sCl- XIOUT_PREFIX: tout${testN}_xi- GXIOUT_PREFIX: tout${testN}_gxi- GCLOUT_PREFIX: tout${testN}_gCl- EXIT_AT: GCLOUT_PREFIX 1>tout${testN}.log 2>>tout${testN}.log
+../bin/flask test${testN}.config FLIST_OUT: tout${testN}_flist.txt SMOOTH_CL_PREFIX: tout${testN}_sCl- XIOUT_PREFIX: tout${testN}_xi- GXIOUT_PREFIX: tout${testN}_gxi- GCLOUT_PREFIX: tout${testN}_gCl- EXIT_AT: GCLOUT_PREFIX &>tout${testN}.log
 
 warnings=`grep "Total number of warnings:" tout${testN}.log | cut -d: -f2`
 if [ $warnings -eq 0 ]; then
@@ -21,11 +21,11 @@ fi
 
 
 # Check map distribution:
-echo "Checking full-sky noisless map distribution..."
+echo "Checking full-sky noiseless map distribution..."
 declare -a arr0=(LOGNORMAL GAUSSIAN HOMOGENEOUS)
 for dist in "${arr0[@]}"; do
     echo $dist
-    ../bin/flask test${testN}.config DIST: $dist EXIT_AT: MAP_OUT MAP_OUT: tout${testN}_map.dat 1>tout${testN}.log 2>>tout${testN}.log
+    ../bin/flask test${testN}.config DIST: $dist EXIT_AT: MAP_OUT MAP_OUT: tout${testN}_map.dat &>tout${testN}.log
     warnings=`grep "Total number of warnings:" tout${testN}.log | cut -d: -f2`
     if [ $warnings -eq 0 ]; then
 	echo $zerowarnings
@@ -44,7 +44,7 @@ nSamples=50
 for dist in "${arr1[@]}"; do
     echo $dist
     echo "Creating regularized Cls..."
-    ../bin/flask test${testN}.config DIST: $dist EXIT_AT: REG_CL_PREFIX REG_CL_PREFIX: tout${testN}_regCl- 1>tout${testN}.log 2>>tout${testN}.log
+    ../bin/flask test${testN}.config DIST: $dist EXIT_AT: REG_CL_PREFIX REG_CL_PREFIX: tout${testN}_regCl- &>tout${testN}.log
     warnings=`grep "Total number of warnings:" tout${testN}.log | cut -d: -f2`
     if [ $warnings -eq 0 ]; then
 	echo $zerowarnings
@@ -68,7 +68,7 @@ for dist in "${arr1[@]}"; do
     echo $dist
     for poisson in "${arr2[@]}"; do
 	echo "POISSON: $poisson"
-	../bin/flask test${testN}.config DIST: $dist POISSON: $poisson EXIT_AT: MAPWERFITS_PREFIX MAPWERFITS_PREFIX: tout${testN}_map- 1>tout${testN}.log 2>>tout${testN}.log
+	../bin/flask test${testN}.config DIST: $dist POISSON: $poisson EXIT_AT: MAPWERFITS_PREFIX MAPWERFITS_PREFIX: tout${testN}_map- &>tout${testN}.log
 	warnings=`grep "Total number of warnings:" tout${testN}.log | cut -d: -f2`
 	if [ $warnings -eq 0 ]; then
 	    echo $zerowarnings
@@ -92,7 +92,7 @@ dist=HOMOGENEOUS
 poisson=1
 echo $dist
 echo "POISSON: $poisson"
-../bin/flask test${testN}.config DIST: $dist POISSON: $poisson EXIT_AT: MAPWERFITS_PREFIX MAPWERFITS_PREFIX: tout${testN}_map- 1>tout${testN}.log 2>>tout${testN}.log
+../bin/flask test${testN}.config DIST: $dist POISSON: $poisson EXIT_AT: MAPWERFITS_PREFIX MAPWERFITS_PREFIX: tout${testN}_map- &>tout${testN}.log
 warnings=`grep "Total number of warnings:" tout${testN}.log | cut -d: -f2`
 if [ $warnings -eq 0 ]; then
     echo $zerowarnings
