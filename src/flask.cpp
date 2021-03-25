@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <gsl/gsl_linalg.h>     // Cholesky descomposition.
-#include <gsl/gsl_randist.h>    // Random numbers.
+#include <random>               // Random numbers.
 #include <iomanip>              // For 'setprecision'.
 #include <alm.h>
 #include <healpix_map.h>
@@ -28,6 +28,12 @@
 #include "ini_config.hpp"
 
 #define RAND_OFFSET 10000000  // For generating random numbers in parallel, add multiples of this to seed.
+
+// the random generator type
+typedef std::mt19937 RngType;
+
+// numerical constants
+static const double ONE_OVER_SQRT2 = 0.7071067811865475;
 
 
 /********************/
@@ -248,27 +254,26 @@ int main (int argc, char *argv[]) {
   /*************************************************/
   /*** PART 4: Auxiliary Gaussian alm generation ***/
   /*************************************************/
-  const double OneOverSqr2=0.7071067811865475;
   bool almout;
   double ***gaus0, ***gaus1;
-  gsl_rng **rnd;
+  std::vector<RngType> rng;
   Alm<xcomplex <ALM_PRECISION> > *aflm, *bflm;
   int jmax, jmin, rndseed0;
     
-  // Set random number generators for each thread, plus one for serial stuff [0]:
-  // Method is meant to:
-  //                    (1) generate aux. alm's fast (in parallel);
-  //                    (2) give independent samples for different RNDSEED (parallel seeds may never overlap);
-  //                    (3) maintain reproducibility (seeds used in each part of computations must be the same for fixed # of threads).
+  // Set random number generators for each thread.
+  // This is meant to:
+  // 1. generate aux. alm's fast (in parallel);
+  // 2. give independent samples for different RNDSEED (parallel seeds may
+  //    never overlap);
+  // 3. maintain reproducibility (seeds used in each part of computations must
+  //    be the same for fixed # of threads).
   Announce("Initializing random number generators... ");
   rndseed0 = config.readi("RNDSEED");
-  rnd      = vector<gsl_rng*>(0,MaxThreads+1);
-  if (rndseed0 > RAND_OFFSET-1) warning("flask: RNDSEED exceeds RAND_OFFSET-1 in code.");
-  for (i=0; i<=MaxThreads; i++) {
-    rnd[i] = gsl_rng_alloc(gsl_rng_mt19937);
-    if (rnd==NULL) error("flask: gsl_rng_alloc failed!");
-    gsl_rng_set(rnd[i], i*RAND_OFFSET+rndseed0);    // set random seed
-  }
+  if (rndseed0 > RAND_OFFSET-1)
+    warning("flask: RNDSEED exceeds RAND_OFFSET-1 in code.");
+  // set all random seeds
+  for (i = 0; i < MaxThreads; ++i)
+    rng.emplace_back(i*RAND_OFFSET+rndseed0);
   Announce();
 
   // Skip alm generation if creating homogeneous uncorrelated fields: all would be zero:
@@ -296,39 +301,49 @@ int main (int argc, char *argv[]) {
     Announce("Generating auxiliary gaussian alm's... ");
     jmin = (lmin*(lmin+1))/2;
     jmax = (lmax*(lmax+3))/2;
-#pragma omp parallel for schedule(static) private(l, m, i, k)
-    for(j=jmin; j<=jmax; j++) {
-    
+    #pragma omp parallel default(none) shared(jmin, jmax, Nfields, rng, gaus0, \
+        gaus1, CovByl, aflm) private(l, m, i, j, k)
+    {
       // Find out which random generator to use:
-      k = omp_get_thread_num()+1;
-      // Find out which multipole to compute:    
-      l = (int)((sqrt(8.0*j+1.0)-1.0)/2.0);
-      m = j-(l*(l+1))/2;
-    
-      // Generate independent 1sigma complex random variables:
-      if (m==0) for (i=0; i<Nfields; i++) {
-	  gaus0[k][i][0] = gsl_ran_gaussian(rnd[k], 1.0);
-	  gaus0[k][i][1] = 0.0;
-	}                                                      // m=0 are real, so real part gets all the variance.
-      else      for (i=0; i<Nfields; i++) {
-	  gaus0[k][i][0] = gsl_ran_gaussian(rnd[k], OneOverSqr2);
-	  gaus0[k][i][1] = gsl_ran_gaussian(rnd[k], OneOverSqr2);
-	}
-    
-      // Generate correlated complex gaussian variables according to CovMatrix:
-      CorrGauss(gaus1[k], CovByl[l], gaus0[k]);
-  
-      // Save alm to tensor:
-      for (i=0; i<Nfields; i++) {
-#if USEXCOMPLEX // For compatibility with Healpix versions <=3.20 and >=v3.30.          
-	aflm[i](l,m).Set(gaus1[k][i][0], gaus1[k][i][1]);
+      k = omp_get_thread_num();
+
+      std::normal_distribution<> gaussian;
+
+      #pragma omp for schedule(static)
+      for (j = jmin; j <= jmax; ++j) {
+        // Find out which multipole to compute:
+        l = (sqrt(8.0*j+1.0)-1.0)/2.0;
+        m = j-(l*(l+1))/2;
+
+        // Generate independent 1sigma complex random variables:
+        if (m == 0) {
+          for (i = 0; i < Nfields; ++i) {
+            // m=0 are real, so real part gets all the variance.
+            gaus0[k+1][i][0] = gaussian(rng[k]);
+            gaus0[k+1][i][1] = 0.0;
+          }
+        } else {
+          for (i = 0; i < Nfields; ++i) {
+            gaus0[k+1][i][0] = gaussian(rng[k])*ONE_OVER_SQRT2;
+            gaus0[k+1][i][1] = gaussian(rng[k])*ONE_OVER_SQRT2;
+          }
+        }
+
+        // Generate correlated complex gaussian variables according to CovMatrix:
+        CorrGauss(gaus1[k+1], CovByl[l], gaus0[k+1]);
+
+        // Save alm to tensor:
+        for (i = 0; i < Nfields; ++i) {
+#if USEXCOMPLEX // For compatibility with Healpix versions <=3.20 and >=v3.30.
+          aflm[i](l, m).Set(gaus1[k+1][i][0], gaus1[k+1][i][1]);
 #else
-	aflm[i](l,m).real(gaus1[k][i][0]);
-	aflm[i](l,m).imag(gaus1[k][i][1]);
+          aflm[i](l, m).real(gaus1[k+1][i][0]);
+          aflm[i](l, m).imag(gaus1[k+1][i][1]);
 #endif
-      }   
-      
-    } // End of LOOP over l's and m's.
+        }
+
+      } // End of LOOP over l's and m's.
+    }
     Announce();
     free_GSLMatrixArray(CovByl, Nls);
     free_tensor3(gaus0, 1,MaxThreads, 0,Nfields-1, 0,1);
@@ -699,83 +714,29 @@ int main (int argc, char *argv[]) {
 
 
   /*** Galaxy fields ***/
- 
-  double dw = 1.4851066049791e8/npixels; // Pixel solid angle in arcmin^2.
-  int *counter;
-  counter = vector<int>(1, MaxThreads);
 
   // Poisson Sampling the galaxy fields:
   if (config.readi("POISSON")==1) {
-    // LOOP over galaxy fields:
-    for (i=0; i<Nfields; i++) if (fieldlist.ftype(i)==fgalaxies) {
-	fieldlist.Index2Name(i, &f, &z);
-	sprintf(message, "Poisson sampling f%dz%d... ", f, z); filename.assign(message); 
-	Announce(filename);
-	for(k=1; k<=MaxThreads; k++) counter[k]=0;
-	// LOOP over pixels of field 'i':
-#pragma omp parallel for schedule(static) private(k)
-	for(j=0; j<npixels; j++) {
-	  k = omp_get_thread_num()+1;
-	  if (mapf[i][j] < -1.0) { counter[k]++; mapf[i][j]=-1.0; } // If density is negative, set it to zero.
-	  if (selection.MaskBit(i,j)==1 || selection.MaskBit(i,j)==3 || selection.MaskBit(i,j)==2) mapf[i][j]=maskval;  
-	  else mapf[i][j] = gsl_ran_poisson(rnd[k], selection(i,j)*(1.0+mapf[i][j])*dw);
-	}
-	Announce();
-	j=0; for (k=1; k<=MaxThreads; k++) j+=counter[k];
-	cout << "Negative density fraction (that was set to 0): "<<std::setprecision(2)<< ((double)j)/npixels*100 <<"%\n";
-      }
+    std::cout << "sampling Poisson number counts" << std::endl;
+    SampleGalaxies<std::poisson_distribution<> >(rng, mapf, selection, maskval,
+                                                 fieldlist, true);
   }
 
   // OR Gaussian Sampling the galaxy fields:
   else if (config.readi("POISSON")==2) {
-    // LOOP over galaxy fields:
-    for (i=0; i<Nfields; i++) if (fieldlist.ftype(i)==fgalaxies) {
-	fieldlist.Index2Name(i, &f, &z);
-	sprintf(message, "Gaussian sampling f%dz%d... ", f, z); filename.assign(message); 
-	Announce(filename);
-	for(k=1; k<=MaxThreads; k++) counter[k]=0;
-	// LOOP over pixels of field 'i':
-#pragma omp parallel for schedule(static) private(k)
-	for(j=0; j<npixels; j++) {
-	  k = omp_get_thread_num()+1;
-	  if (selection.MaskBit(i,j)==1 || selection.MaskBit(i,j)==3 || selection.MaskBit(i,j)==2) mapf[i][j]=maskval;
-	  else {
-	    mapf[i][j] = selection(i,j)*(1.0+mapf[i][j])*dw + gsl_ran_gaussian(rnd[k], sqrt(selection(i,j)*dw)); 
-	    if (mapf[i][j] < 0) counter[k]++; // Count pixels that have negative number of galaxies after sampling.
-	  }
-	}
-	Announce();
-	j=0; for (k=1; k<=MaxThreads; k++) j+=counter[k];
-	cout << "Negative counts fraction (after sampling): "<<std::setprecision(2)<< ((double)j)/npixels*100 <<"%\n";
-      }
+    std::cout << "sampling Gaussian number counts" << std::endl;
+    SampleGalaxies<std::normal_distribution<> >(rng, mapf, selection, maskval,
+                                                fieldlist, false);
   }
   
   // Just generate the expected number density, if requested:
   else if (config.readi("POISSON")==0) {
-    // LOOP over galaxy fields:
-    for (i=0; i<Nfields; i++) if (fieldlist.ftype(i)==fgalaxies) {
-	fieldlist.Index2Name(i, &f, &z);
-	sprintf(message,"Using expected (no sampling) number counts for f%dz%d...", f, z); filename.assign(message);
-	Announce(message);	
-	for(k=1; k<=MaxThreads; k++) counter[k]=0;
-	// LOOP over pixels of field 'i':
-#pragma omp parallel for schedule(static) private(k)
-	for(j=0; j<npixels; j++) {
-	  k = omp_get_thread_num()+1;
-	  if (selection.MaskBit(i,j)==1 || selection.MaskBit(i,j)==3 || selection.MaskBit(i,j)==2) mapf[i][j]=maskval;
-	  else {
-	    mapf[i][j] = selection(i,j)*(1.0+mapf[i][j])*dw;
-	    if (mapf[i][j] < 0) counter[k]++; // Count pixels that have negative number of galaxies.
-	  }
-	}
-	Announce();
-	j=0; for (k=1; k<=MaxThreads; k++) j+=counter[k];
-	cout << "Negative counts fraction: "<<std::setprecision(2)<< ((double)j)/npixels*100 <<"%\n";
-      }
+    std::cout << "using expected number counts (no sampling)" << std::endl;
+    SampleGalaxies<DeltaDistribution<> >(rng, mapf, selection, maskval,
+                                         fieldlist, false);
   }
   
   else error ("flask: unknown POISSON option.");
-  free_vector(counter, 1, MaxThreads);
   
 
   /*** Convergence fields ***/
@@ -811,6 +772,7 @@ int main (int argc, char *argv[]) {
 
   
   /*** Ellipticity fields ***/
+  const double dw = 1.4851066049791e8/npixels; // Pixel solid angle in arcmin^2
   
   // Read from the CONFIG file whether shear or reduced shear is to be used for calculating the observed ellipticities:
   use_redu_shear = true; use_shear = false;                     // Default values
@@ -844,7 +806,8 @@ int main (int argc, char *argv[]) {
 	    Announce(filename);
 #pragma omp parallel for schedule(static) private(k, shearopt1, shearopt2)
 	    for(m=0; m<npixels; m++) {
-	      k = omp_get_thread_num()+1;
+	      k = omp_get_thread_num();
+	      std::normal_distribution<> gaussian;
 	      // Mask ellipticity map at galaxy-free pixels:
 	      if (mapf[i][m]<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
 
@@ -860,8 +823,8 @@ int main (int argc, char *argv[]) {
                             }
 
 	        if (esig>0.0) {
-		        e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
-		        e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(mapf[i][m]));
+		        e1Mapf[i][m] = shearopt1 + gaussian(rng[k])*(esig/sqrt(mapf[i][m]));
+		        e2Mapf[i][m] = shearopt2 + gaussian(rng[k])*(esig/sqrt(mapf[i][m]));
           }
           else {
             e1Mapf[i][m] = shearopt1;
@@ -887,7 +850,8 @@ int main (int argc, char *argv[]) {
 	  Announce(filename);
 #pragma omp parallel for schedule(static) private(k)
 	  for(m=0; m<npixels; m++) {
-	    k = omp_get_thread_num()+1;
+	    k = omp_get_thread_num();
+	    std::normal_distribution<> gaussian;
 	    // Mask ellipticity map at masked regions:
 	    if (selection(i,m)<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
 	    // In unmasked regions, average ellipticity in pixel is the reduced shear plus the average of the error:
@@ -902,8 +866,8 @@ int main (int argc, char *argv[]) {
                           }
 
         if (esig>0.0) {
-          e1Mapf[i][m] = shearopt1 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
-          e2Mapf[i][m] = shearopt2 + gsl_ran_gaussian(rnd[k], esig/sqrt(selection(i,m)*dw));
+          e1Mapf[i][m] = shearopt1 + gaussian(rng[k])*(esig/sqrt(selection(i,m)*dw));
+          e2Mapf[i][m] = shearopt2 + gaussian(rng[k])*(esig/sqrt(selection(i,m)*dw));
         }
         else {
           e1Mapf[i][m] = shearopt1;
@@ -1043,8 +1007,8 @@ int main (int argc, char *argv[]) {
       
       // Add entry of type GALAXY:      
       if (fieldlist.ftype(i)==fgalaxies) for(m=0; m<(int)mapf[i][j]; m++) {
-	  if (theta_pos!=-1 || phi_pos!=-1) ang   = RandAngInPix(rnd[l+1], mapf[i], j);
-	  if (z_pos!=-1 || r_pos!=-1)       randz = selection.RandRedshift(rnd[l+1],i,j);
+	  if (theta_pos!=-1 || phi_pos!=-1) ang   = RandAngInPix(rng[l], mapf[i], j);
+	  if (z_pos!=-1 || r_pos!=-1)       randz = selection.RandRedshift(rng[l],i,j);
 	  if (maskbit_pos!=-1)              k     = selection.MaskBit(i,j);
 	  if (r_pos!=-1)                    rdist = ComDist(cosmo, randz);
 	  CatalogFill(catalog, ThreadNgals[l]+PartialNgal+gali, theta_pos  , ang.theta, catSet);
@@ -1061,7 +1025,7 @@ int main (int argc, char *argv[]) {
       else if (fieldlist.ftype(i)==flensing) for (m=0; m<cellNgal; m++) {
 	  CatalogFill  (catalog, ThreadNgals[l]+PartialNgal+m, kappa_pos , mapf[i][j]   , catSet);
 	  if (yesShear==1) {
-	    if (ellip1_pos!=-1 || ellip2_pos!=-1) GenEllip(rnd[l+1], esig, mapf[i][j], gamma1f[i][j], gamma2f[i][j], &ellip1, &ellip2, use_shear);
+	    if (ellip1_pos!=-1 || ellip2_pos!=-1) GenEllip(rng[l], esig, mapf[i][j], gamma1f[i][j], gamma2f[i][j], &ellip1, &ellip2, use_shear);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, gamma1_pos, gamma1f[i][j], catSet);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, gamma2_pos, gamma2f[i][j], catSet);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, ellip1_pos, ellip1       , catSet);
@@ -1090,8 +1054,7 @@ int main (int argc, char *argv[]) {
   free_vector(mapf,    0, Nfields-1 );
   if (yesShear==1) free_vector(gamma1f, 0, Nfields-1);
   if (yesShear==1) free_vector(gamma2f, 0, Nfields-1);
-  for (i=0; i<=MaxThreads; i++) gsl_rng_free(rnd[i]);
-  free_vector(rnd, 0,MaxThreads+1);
+  rng = decltype(rng)();
   Announce();
 
   // Change angular coordinates if requested:

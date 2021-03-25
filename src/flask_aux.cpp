@@ -1,6 +1,5 @@
 // These are functions created specifically for the flask program.
 #include "flask_aux.hpp"
-#include <gsl/gsl_randist.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_min.h>
 #include <xcomplex.h>
@@ -533,92 +532,6 @@ void Kappa2ShearEmode(Alm<xcomplex <ALM_PRECISION> > &Elm, Alm<xcomplex <ALM_PRE
   }
 }
 
-
-// Generates galaxy ellipticity from shear and convergence, including random source ellipticity:
-void GenEllip(gsl_rng *rnd, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2, bool use_shear) {
-               using std::cout; using std::endl; using std::cin;                     // Basic stuff.
-  std::complex<double> g, epsSrc, eps, k, one, gamma;
-  double epsmag;
-
-  // Set complex numbers:
-  gamma.real(gamma1); gamma.imag(gamma2);
-  k.real(kappa);      k.imag(0.0);
-  one.real(1.0);      one.imag(0.0);
-
-  // Compute reduced shear:
-  g = gamma/(one-k);
-
-  // Generate source intrinsic ellipticity:
-  if (sigma>0.0) {
-    // If shear is being used, we are going to limit ourselves to the ellipticity formula for the case of abs(g)<1.
-    // We then assume that the maximum value of shear (gamma) that can be encountered is 0.1.
-    // Hence, we allow intrinsic elipticity (epsSrc = epsilon_s) to be only up to 0.9.
-    if (use_shear==1) {
-      epsmag = 1.0;         //Initial dummy value of the magnitude of intrinsic elipticity
-      while (epsmag > 0.9) {
-        epsSrc.real(gsl_ran_gaussian(rnd, sigma));
-        epsSrc.imag(gsl_ran_gaussian(rnd, sigma));
-        epsmag = std::abs(epsSrc);
-      }
-
-    }
-    // If reduced shear is being used, then we are free to generate any random value for the intrinsic ellipticity:
-    else {
-      epsSrc.real(gsl_ran_gaussian(rnd, sigma));
-      epsSrc.imag(gsl_ran_gaussian(rnd, sigma));
-    }
-  }
-  else {
-    epsSrc.real(0.0);
-    epsSrc.imag(0.0);
-  }
-  // Compute ellipticity of the image:
-  if (norm(g) <= 1.0) {
-    if (use_shear==1) {eps = (epsSrc + gamma);}                 // If shear is to be used
-    else {eps = (epsSrc+g) / (one + conj(g)*epsSrc);}           // If reduced shear is to be used
-  }
-  else {
-    eps = (one + g*conj(epsSrc))/(conj(epsSrc)+conj(g));
-  }
-  //Return ellipticity of the image:
-  (*eps1) = eps.real();
-  (*eps2) = eps.imag();
-} 
-
-
-// Uniformly randomly selects an angular position inside a pixel.
-pointing RandAngInPix(gsl_rng *r, const Healpix_Map<MAP_PRECISION> & map, int pixel) {
-  const double twopi=6.283185307179586;
-  std::vector<vec3> corner;
-  double thetamin, thetamax, phimin, phimax;
-  pointing ang;
-  // Find pixel limits for random sampling the angles:
-  map.boundaries(pixel, 1, corner);
-  thetamin = xyz2ang(corner[0]).theta; // N corner.
-  thetamax = xyz2ang(corner[2]).theta; // S corner.
-  phimin   = xyz2ang(corner[1]).phi;   // W corner.
-  phimax   = xyz2ang(corner[3]).phi;   // E corner.
-  if (phimin>phimax) phimin = phimin-twopi;
-  // Randomly pick angle inside the pixel. 
-  do {ang = randang(r, thetamin, thetamax, phimin, phimax);} 
-  while (map.ang2pix(ang) != pixel);
-  // Return pointing:
-  return ang;
-}
-
-// Randomly picks an angular position (uniformly) inside angular boundaries. Needed for RandAngInPix. 
-pointing randang(gsl_rng *r, double thetamin, double thetamax, double phimin, double phimax) {
-  const double twopi=6.283185307179586;
-  double xmin, xmax;
-  pointing ang;
-
-  xmin      = (1.0+cos(thetamax))/2.0;
-  xmax      = (1.0+cos(thetamin))/2.0;
-  ang.phi   = gsl_rng_uniform(r)*(phimax-phimin)+phimin;
-  ang.theta = acos(2*(gsl_rng_uniform(r)*(xmax-xmin)+xmin)-1);
-  return ang;
-}
-
 // Transforms normalized {x,y,z} cartesian coordinates to unit spherical {theta, phi}:
 pointing xyz2ang(const vec3 & cartesian) {
   const double pi=3.141592653589793;
@@ -634,21 +547,6 @@ pointing xyz2ang(const vec3 & cartesian) {
   return ang;
 }
 
-// Returns the coefficients (x,y,z) of a vector described in a basis that is rotated by 'ang' from the original basis. 
-vec3 VecInRotBasis(const pointing & ang, const vec3 & orig) {
-  vec3 nuovo;
-  nuovo.x = cos(ang.theta)*cos(ang.phi)*orig.x + cos(ang.theta)*sin(ang.phi)*orig.y - sin(ang.theta)*orig.z;
-  nuovo.y =      -1.0*sin(ang.phi)     *orig.x +          cos(ang.phi)      *orig.y;
-  nuovo.z = sin(ang.theta)*cos(ang.phi)*orig.x + sin(ang.theta)*sin(ang.phi)*orig.y + cos(ang.theta)*orig.z;
-  return nuovo;
-}
-
-// Uniformly samples the redshift of a bin. THIS IS WRONG, OR AN APPROXIMATION FOR VERY FINE BINS.
-double RandRedshift0(gsl_rng *r, double zmin, double zmax) {
-  return gsl_rng_uniform(r)*(zmax-zmin)+zmin;
-}
-
-
 /*** Multiply Lower-triangular matrix L to complex vector gaus0 and return gaus1 ***/
 void CorrGauss(double **gaus1, gsl_matrix *L, double **gaus0) {
   long i, j;
@@ -662,87 +560,3 @@ void CorrGauss(double **gaus1, gsl_matrix *L, double **gaus0) {
     }
   }
 }
-
-
-/*** Get a number that specify the l of the cov. matrix ***/
-int getll(const std::string filename) {
-  int i=0, num=0, fileL;
-  
-  fileL=filename.length();
-  // Find a number:
-  while (isdigit(filename.c_str()[i])==0) {i++; if(i>=fileL) error("getll: cannot find any number.");}
-  // Read the number:
-  while (isdigit(filename.c_str()[i])!=0) {num = num*10 + (filename.c_str()[i]-'0'); i++;}
-  // Check if there are more numbers in filename:
-  while (i<=fileL) {
-    if (isdigit(filename.c_str()[i])!=0) error("getll: found more numbers than expected.");
-    i++;
-  }
-
-  // Return number found:
-  return num;
-}
-
-
-/*** Returns getll as string ***/
-std::string getllstr(const std::string filename) {
-  std::stringstream ss;
-  ss << getll(filename);
-  return ss.str();
-}
-
-
-/*** Assign a matrix column n to a variable 'a' identified by a1 and a2  ***/
-void fz2n (int a1, int a2, int *n, int N1, int N2) {
-  if (a2>N2 || a1>N1 || a1<1 || a2<1) warning("fz2n: unexpected input values.");
-  *n = (a1-1)*N2+a2-1; 
-}
-
-
-/*** The inverse of ij2fzfz above ***/
-void n2fz (int n, int *a1, int *a2, int N1, int N2) {
-  if (n<0 || n>=N1*N2) warning("n2fz: unexpected input values.");
-  *a2 = n%N2+1;
-  *a1 = n/N2+1;
-}
-
-
-/*** Assign a matrix row i to a variable 'a' identified by a1 and a2 ***/
-/*** Assign a matrix column j to a variable 'b' identified by b1 and b2  ***/
-void fzfz2ij (int a1, int a2, int b1, int b2, int *i, int *j, int N1, int N2) {
-  if (a2>N2 || b2>N2 || a1>N1 || b1>N1 || a1<1 || a2<1 || b1<1 || b2<1) warning("fzfz2ij: unexpected input values.");
-  fz2n(a1, a2, i, N1, N2);
-  fz2n(b1, b2, j, N1, N2);
-}
-
-/*** The inverse of ij2fzfz above ***/
-void ij2fzfz (int i, int j, int *a1, int *a2, int *b1, int *b2, int N1, int N2) {
-  if (i<0 || j<0 || i>=N1*N2 || j>=N1*N2) warning("ij2fzfz: unexpected input values.");
-  n2fz(i, a1, a2, N1, N2);
-  n2fz(j, b1, b2, N1, N2);
-}
-
-
-/*** Function for testing the assignments above ***/
-void test_fzij (int N1, int N2) {
-  int a1, a2, b1, b2, i, j, newa1, newa2, newb1, newb2;
-  bool **IsSet;
-
-  IsSet = matrix<bool>(0,N1*N2-1,0,N1*N2-1);
-  for(i=0; i<N1*N2; i++) for(j=0; j<N1*N2; j++) IsSet[i][j]=0;
-  
-  for (a1=1; a1<=N1; a1++)
-    for (a2=1; a2<=N2; a2++)
-      for (b1=1; b1<=N1; b1++)
-	for (b2=1; b2<=N2; b2++) {
-	  fzfz2ij(a1, a2, b1, b2, &i, &j, N1, N2); 
-	  if (IsSet[i][j]==1) error("test_fzij: tried to set [i,j] already set.");
-	  IsSet[i][j]=1;
-	  ij2fzfz(i, j, &newa1, &newa2, &newb1, &newb2, N1, N2);
-	  if(newa1!=a1 || newa2!=a2 || newb1!=b1 || newb2!=b2) error("test_fzij: function ij2fzfz not the inverse of fzfz2ij."); 
-	}
-  for(i=0; i<N1*N2; i++) for(j=0; j<N1*N2; j++) if (IsSet[i][j]!=1) error("Matrix [i,j] not fully populated.");
-
-  free_matrix(IsSet,0,N1*N2-1,0,N1*N2-1);
-}
-
