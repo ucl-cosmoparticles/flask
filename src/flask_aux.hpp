@@ -242,11 +242,11 @@ typename DeltaDistribution<RealType>::param_type
 
 
 // sample galaxies from a random number distribution
-template<class Distribution, class RngVec, class MapType, class SelectionType,
+template<class Distribution, class RNG, class MapType, class SelectionType,
          class MaskType, class FieldsType>
-void SampleGalaxies(RngVec& rng, MapType& mapf, const SelectionType& selection,
-                    const MaskType& maskval, const FieldsType& fieldlist,
-                    bool clamp_density) {
+void SampleGalaxies(typename RNG::key_type& rngkey, MapType& mapf,
+                    const SelectionType& selection, const MaskType& maskval,
+                    const FieldsType& fieldlist, bool clamp_density) {
   std::vector<int> counter(omp_get_max_threads());
 
   for (int i = 0, n = fieldlist.Nfields(); i < n; ++i) {
@@ -263,15 +263,21 @@ void SampleGalaxies(RngVec& rng, MapType& mapf, const SelectionType& selection,
 
       std::fill(counter.begin(), counter.end(), 0);
 
+      rngkey.incr();
+
       #pragma omp parallel default(none) shared(i, npix, clamp_density, mapf, \
-          counter, selection, maskval, dw, rng)
+          counter, selection, maskval, dw, rngkey)
       {
         Distribution d;
 
         const int k = omp_get_thread_num();
 
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(dynamic)
         for (int j = 0; j < npix; ++j) {
+          typename RNG::ctr_type rngctr = {
+              static_cast<typename RNG::ctr_type::value_type>(j)};
+          RNG rng(rngctr, rngkey);
+
           if (clamp_density && mapf[i][j] < -1.0) {
             // If density is negative, set it to zero.
             mapf[i][j] = -1.0;
@@ -287,7 +293,7 @@ void SampleGalaxies(RngVec& rng, MapType& mapf, const SelectionType& selection,
             const double mean = s*(1.0+mapf[i][j])*dw;
             const double var = s*dw;
 
-            mapf[i][j] = d(rng[k], make_param(d, mean, var));
+            mapf[i][j] = d(rng, make_param(d, mean, var));
 
             // Count pixels with negative number of galaxies after sampling.
             if (!clamp_density && mapf[i][j] < 0)

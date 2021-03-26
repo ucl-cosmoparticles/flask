@@ -27,10 +27,16 @@
 #include <ctime> // For timing full code run with StartAll.
 #include "ini_config.hpp"
 
-#define RAND_OFFSET 10000000  // For generating random numbers in parallel, add multiples of this to seed.
+// counter-based random number generation (CBRNG)
+// see Salmon, Moraes, Dror, Shaw (2011)
+#include "Random123/philox.h"
+#include "Random123/MicroURNG.hpp"
 
-// the random generator type
-typedef std::mt19937 RngType;
+// the specific CBRNG we are using
+using CBRNG = r123::Philox4x64;
+
+// the C++11 interface to the CBRNG
+using RNG = r123::MicroURNG<CBRNG>;
 
 // numerical constants
 static const double ONE_OVER_SQRT2 = 0.7071067811865475;
@@ -67,17 +73,10 @@ int main (int argc, char *argv[]) {
 
   // Testing the code:
   StartAll = time(NULL);
-  Announce("Testing the code... "); 
-  // Verify that max. value for INT is not smaller than expected:
-  sprintf(message, "%d", INT_MAX); filename.assign(message);
-  if (filename.size() < 10) 
-    warning("flask: INT_MAX is smaller than expected, may mess parallel random number generator.");
-  Announce();
   
   MaxThreads = omp_get_max_threads();
   cout << "FLASK commit:       " << FLASKCOMMIT << endl;
   cout << "Max. # of threads:  " << MaxThreads  << endl;
-  if (MaxThreads>210) warning("flask: # of threads too big, may mess parallel random number generator.");
 
   // Make sure a config/ini file is supplied:
   if (argc<=1) { cout << "You must supply a config or ini file as the first command line argument." << endl; return 0;}
@@ -141,6 +140,28 @@ int main (int argc, char *argv[]) {
   else if (config.reads("DIST")=="HOMOGENEOUS") dist=homogeneous;
   else error("flask: unknown DIST: "+config.reads("DIST"));
  
+
+  // set up random number generation
+  //
+  // counter-based random number generation does not require the classical seed
+  // and a linear sequence of draws: for a specific "key", any given random
+  // number in the sequence can be returned from its "counter" value
+  //
+  // - the seed will form the second element of the key of the RNG
+  // - a running count of loops is the first element of the key
+  // - before each loop, the key is incremented (i.e. first element += 1) to get
+  //   unique values in each loop
+  // - hence there need to be less than 2^nbit for loops in a run
+  // - we create a new RNG in each iteration of each for loop; this is cheap
+  // - the iterator will be the counter of the RNG
+  // - the last bits of the counter are used internally so that more than 1
+  //   random value can be sampled per iteration
+  // - hence there need to be less than 2^nbit random numbers sampled in each
+  //   iteration of the loop
+  //
+  const int rndseed = config.readi("RNDSEED");
+  RNG::ukey_type rngkey = {0, (RNG::key_type::value_type)rndseed};
+
 
   /***********************************/
   /*** PART 1: Loads fields info   ***/
@@ -256,26 +277,9 @@ int main (int argc, char *argv[]) {
   /*************************************************/
   bool almout;
   double ***gaus0, ***gaus1;
-  std::vector<RngType> rng;
   Alm<xcomplex <ALM_PRECISION> > *aflm, *bflm;
-  int jmax, jmin, rndseed0;
+  int jmax, jmin;
     
-  // Set random number generators for each thread.
-  // This is meant to:
-  // 1. generate aux. alm's fast (in parallel);
-  // 2. give independent samples for different RNDSEED (parallel seeds may
-  //    never overlap);
-  // 3. maintain reproducibility (seeds used in each part of computations must
-  //    be the same for fixed # of threads).
-  Announce("Initializing random number generators... ");
-  rndseed0 = config.readi("RNDSEED");
-  if (rndseed0 > RAND_OFFSET-1)
-    warning("flask: RNDSEED exceeds RAND_OFFSET-1 in code.");
-  // set all random seeds
-  for (i = 0; i < MaxThreads; ++i)
-    rng.emplace_back(i*RAND_OFFSET+rndseed0);
-  Announce();
-
   // Skip alm generation if creating homogeneous uncorrelated fields: all would be zero:
   if (dist!=homogeneous) {
   
@@ -297,20 +301,27 @@ int main (int argc, char *argv[]) {
     }
     Announce();
 
+    rngkey.incr();
+
     // LOOP over l's and m's together:
     Announce("Generating auxiliary gaussian alm's... ");
     jmin = (lmin*(lmin+1))/2;
     jmax = (lmax*(lmax+3))/2;
-    #pragma omp parallel default(none) shared(jmin, jmax, Nfields, rng, gaus0, \
-        gaus1, CovByl, aflm) private(l, m, i, j, k)
+    #pragma omp parallel default(none) shared(jmin, jmax, Nfields, rngkey, \
+        gaus0, gaus1, CovByl, aflm) private(l, m, i, j, k)
     {
       // Find out which random generator to use:
       k = omp_get_thread_num();
 
       std::normal_distribution<> gaussian;
 
-      #pragma omp for schedule(static)
+      #pragma omp for schedule(dynamic)
       for (j = jmin; j <= jmax; ++j) {
+
+        typename RNG::ctr_type rngctr = {
+            static_cast<typename RNG::ctr_type::value_type>(j)};
+        RNG rng(rngctr, rngkey);
+
         // Find out which multipole to compute:
         l = (sqrt(8.0*j+1.0)-1.0)/2.0;
         m = j-(l*(l+1))/2;
@@ -319,13 +330,13 @@ int main (int argc, char *argv[]) {
         if (m == 0) {
           for (i = 0; i < Nfields; ++i) {
             // m=0 are real, so real part gets all the variance.
-            gaus0[k+1][i][0] = gaussian(rng[k]);
+            gaus0[k+1][i][0] = gaussian(rng);
             gaus0[k+1][i][1] = 0.0;
           }
         } else {
           for (i = 0; i < Nfields; ++i) {
-            gaus0[k+1][i][0] = gaussian(rng[k])*ONE_OVER_SQRT2;
-            gaus0[k+1][i][1] = gaussian(rng[k])*ONE_OVER_SQRT2;
+            gaus0[k+1][i][0] = gaussian(rng)*ONE_OVER_SQRT2;
+            gaus0[k+1][i][1] = gaussian(rng)*ONE_OVER_SQRT2;
           }
         }
 
@@ -718,22 +729,22 @@ int main (int argc, char *argv[]) {
   // Poisson Sampling the galaxy fields:
   if (config.readi("POISSON")==1) {
     std::cout << "sampling Poisson number counts" << std::endl;
-    SampleGalaxies<std::poisson_distribution<> >(rng, mapf, selection, maskval,
-                                                 fieldlist, true);
+    SampleGalaxies<std::poisson_distribution<>, RNG>(rngkey, mapf, selection,
+                                                 maskval, fieldlist, true);
   }
 
   // OR Gaussian Sampling the galaxy fields:
   else if (config.readi("POISSON")==2) {
     std::cout << "sampling Gaussian number counts" << std::endl;
-    SampleGalaxies<std::normal_distribution<> >(rng, mapf, selection, maskval,
-                                                fieldlist, false);
+    SampleGalaxies<std::normal_distribution<>, RNG>(rngkey, mapf, selection,
+                                                maskval, fieldlist, false);
   }
   
   // Just generate the expected number density, if requested:
   else if (config.readi("POISSON")==0) {
     std::cout << "using expected number counts (no sampling)" << std::endl;
-    SampleGalaxies<DeltaDistribution<> >(rng, mapf, selection, maskval,
-                                         fieldlist, false);
+    SampleGalaxies<DeltaDistribution<>, RNG>(rngkey, mapf, selection, maskval,
+                                             fieldlist, false);
   }
   
   else error ("flask: unknown POISSON option.");
@@ -804,9 +815,14 @@ int main (int argc, char *argv[]) {
 	    e1Mapf[i].SetNside(nside,RING);  e2Mapf[i].SetNside(nside,RING);
 	    sprintf(message, "Generating ellipticity for f%dz%d...", f, z); filename.assign(message); 
 	    Announce(filename);
-#pragma omp parallel for schedule(static) private(k, shearopt1, shearopt2)
+
+	    rngkey.incr();
+
+#pragma omp parallel for schedule(dynamic) private(k, shearopt1, shearopt2)
 	    for(m=0; m<npixels; m++) {
-	      k = omp_get_thread_num();
+	      typename RNG::ctr_type rngctr = {
+	          static_cast<typename RNG::ctr_type::value_type>(m)};
+	      RNG rng(rngctr, rngkey);
 	      std::normal_distribution<> gaussian;
 	      // Mask ellipticity map at galaxy-free pixels:
 	      if (mapf[i][m]<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
@@ -823,8 +839,8 @@ int main (int argc, char *argv[]) {
                             }
 
 	        if (esig>0.0) {
-		        e1Mapf[i][m] = shearopt1 + gaussian(rng[k])*(esig/sqrt(mapf[i][m]));
-		        e2Mapf[i][m] = shearopt2 + gaussian(rng[k])*(esig/sqrt(mapf[i][m]));
+		        e1Mapf[i][m] = shearopt1 + gaussian(rng)*(esig/sqrt(mapf[i][m]));
+		        e2Mapf[i][m] = shearopt2 + gaussian(rng)*(esig/sqrt(mapf[i][m]));
           }
           else {
             e1Mapf[i][m] = shearopt1;
@@ -848,9 +864,14 @@ int main (int argc, char *argv[]) {
 	  e1Mapf[i].SetNside(nside,RING);  e2Mapf[i].SetNside(nside,RING);
 	  sprintf(message, "Generating ellipticity for f%dz%d...", f, z); filename.assign(message); 
 	  Announce(filename);
-#pragma omp parallel for schedule(static) private(k)
+
+	  rngkey.incr();
+
+#pragma omp parallel for schedule(dynamic) private(k)
 	  for(m=0; m<npixels; m++) {
-	    k = omp_get_thread_num();
+	      typename RNG::ctr_type rngctr = {
+	          static_cast<typename RNG::ctr_type::value_type>(m)};
+	    RNG rng(rngctr, rngkey);
 	    std::normal_distribution<> gaussian;
 	    // Mask ellipticity map at masked regions:
 	    if (selection(i,m)<=0) { e1Mapf[i][m]=maskval;  e2Mapf[i][m]=maskval; }
@@ -866,8 +887,8 @@ int main (int argc, char *argv[]) {
                           }
 
         if (esig>0.0) {
-          e1Mapf[i][m] = shearopt1 + gaussian(rng[k])*(esig/sqrt(selection(i,m)*dw));
-          e2Mapf[i][m] = shearopt2 + gaussian(rng[k])*(esig/sqrt(selection(i,m)*dw));
+          e1Mapf[i][m] = shearopt1 + gaussian(rng)*(esig/sqrt(selection(i,m)*dw));
+          e2Mapf[i][m] = shearopt2 + gaussian(rng)*(esig/sqrt(selection(i,m)*dw));
         }
         else {
           e1Mapf[i][m] = shearopt1;
@@ -981,6 +1002,8 @@ int main (int argc, char *argv[]) {
   if (k<1 && (kappa_pos!=-1 || gamma1_pos!=-1 || gamma2_pos!=-1 || ellip1_pos!=-1 || ellip1_pos!=-1)) 
     warning("flask: missing lensing information required to build catalogue.");
 
+  rngkey.incr();
+
   // LOOP over 3D cells (pixels and redshifts):
   Announce("Generating catalog... ");
   if (r_pos!=-1) ComDist(cosmo,1.0);   // Initialize Comoving distance formula if requested.
@@ -994,6 +1017,10 @@ int main (int argc, char *argv[]) {
     gali     = 0;                      // Galaxy number inside cell.
     cellNgal = 0;                      // Total galaxy number inside cell.
     
+    typename RNG::ctr_type rngctr = {
+      static_cast<typename RNG::ctr_type::value_type>(kl)};
+    RNG rng(rngctr, rngkey);
+
     // Count total number of galaxies of all types inside cell:
     for (fiter=0; fiter<fieldlist.Nf4z(ziter); fiter++) {
       i = fieldlist.zFixedIndex(fiter, ziter);
@@ -1007,8 +1034,8 @@ int main (int argc, char *argv[]) {
       
       // Add entry of type GALAXY:      
       if (fieldlist.ftype(i)==fgalaxies) for(m=0; m<(int)mapf[i][j]; m++) {
-	  if (theta_pos!=-1 || phi_pos!=-1) ang   = RandAngInPix(rng[l], mapf[i], j);
-	  if (z_pos!=-1 || r_pos!=-1)       randz = selection.RandRedshift(rng[l],i,j);
+	  if (theta_pos!=-1 || phi_pos!=-1) ang   = RandAngInPix(rng, mapf[i], j);
+	  if (z_pos!=-1 || r_pos!=-1)       randz = selection.RandRedshift(rng,i,j);
 	  if (maskbit_pos!=-1)              k     = selection.MaskBit(i,j);
 	  if (r_pos!=-1)                    rdist = ComDist(cosmo, randz);
 	  CatalogFill(catalog, ThreadNgals[l]+PartialNgal+gali, theta_pos  , ang.theta, catSet);
@@ -1025,7 +1052,7 @@ int main (int argc, char *argv[]) {
       else if (fieldlist.ftype(i)==flensing) for (m=0; m<cellNgal; m++) {
 	  CatalogFill  (catalog, ThreadNgals[l]+PartialNgal+m, kappa_pos , mapf[i][j]   , catSet);
 	  if (yesShear==1) {
-	    if (ellip1_pos!=-1 || ellip2_pos!=-1) GenEllip(rng[l], esig, mapf[i][j], gamma1f[i][j], gamma2f[i][j], &ellip1, &ellip2, use_shear);
+	    if (ellip1_pos!=-1 || ellip2_pos!=-1) GenEllip(rng, esig, mapf[i][j], gamma1f[i][j], gamma2f[i][j], &ellip1, &ellip2, use_shear);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, gamma1_pos, gamma1f[i][j], catSet);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, gamma2_pos, gamma2f[i][j], catSet);
 	    CatalogFill(catalog, ThreadNgals[l]+PartialNgal+m, ellip1_pos, ellip1       , catSet);
@@ -1054,7 +1081,6 @@ int main (int argc, char *argv[]) {
   free_vector(mapf,    0, Nfields-1 );
   if (yesShear==1) free_vector(gamma1f, 0, Nfields-1);
   if (yesShear==1) free_vector(gamma2f, 0, Nfields-1);
-  rng = decltype(rng)();
   Announce();
 
   // Change angular coordinates if requested:
@@ -1092,6 +1118,11 @@ int main (int argc, char *argv[]) {
     }
   }  
   free_matrix(catalog, 0,ncols-1, 0,Ngalaxies-1);
+
+
+  // check that RNG key did not overflow
+  if(rngkey[1] != rndseed)
+    warning("random number generation overflowed; DO NOT TRUST RESULTS");
 
 
   // End of the program
