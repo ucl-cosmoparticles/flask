@@ -258,6 +258,13 @@ int main (int argc, char *argv[]) {
     }
     Announce();
 
+    // potential sign flip for alm
+    double almsgn = 1.;
+    if (config.readi("FLIP_ALM")) {
+      almsgn = -1.;
+      cout << "will flip alm signs" << endl;
+    }
+
     // LOOP over l's and m's together:
     Announce("Generating auxiliary gaussian alm's... ");
     jmin = (lmin*(lmin+1))/2;
@@ -308,10 +315,10 @@ int main (int argc, char *argv[]) {
       // Save alm to tensor:
       for (i=0; i<Nfields; i++) {
 #if USEXCOMPLEX // For compatibility with Healpix versions <=3.20 and >=v3.30.          
-	aflm[i](l,m).Set(gaus1[k][i][0], gaus1[k][i][1]);
+	aflm[i](l,m).Set(almsgn*gaus1[k][i][0], almsgn*gaus1[k][i][1]);
 #else
-	aflm[i](l,m).real(gaus1[k][i][0]);
-	aflm[i](l,m).imag(gaus1[k][i][1]);
+	aflm[i](l,m).real(almsgn*gaus1[k][i][0]);
+	aflm[i](l,m).imag(almsgn*gaus1[k][i][1]);
 #endif
       }   
       
