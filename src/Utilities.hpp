@@ -32,7 +32,6 @@ bool IsNumber(std::string str);
 int str2int(std::string str);
 // Output:
 void PrintHeader(std::string *labels, int Nentries, std::ostream *output = &std::cout);
-bool stringexist(std::string str1, std::string str2);
 
 /*** TEMPLATES ***/
 

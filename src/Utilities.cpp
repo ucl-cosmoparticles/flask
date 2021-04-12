@@ -317,28 +317,3 @@ void PrintHeader(std::string *labels, int Nentries, std::ostream *output) {
   }
   *output << std::endl;
 }
-
-
-// Check if a particular string is found within a given file:
-bool stringexist(std::string file_name, std::string check_string) {
-
-  using std::ifstream;
-  std::string line;
-  bool found = false;
-  ifstream filestream(file_name.c_str());
-
-  //index = findpar(name+":");
-
-  while( std::getline( filestream, line ) && !found)  // Go through each line one by one
-  {
-    if(line.find(check_string) != std::string::npos){ // Search for check_string in the given line
-        //std::cout << line << "found in the config file" << std::endl;
-        found = true;
-        break;
-    }
-    else {
-        //std::cout << line << "NOT found in the config file" << std::endl;
-    }
-  }
-  return found;
-}

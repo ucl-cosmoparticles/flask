@@ -25,7 +25,6 @@
 #include "FieldsDatabase.hpp"
 #include <unistd.h> // debugging
 #include <ctime> // For timing full code run with StartAll.
-#include "ini_config.hpp"
 
 // counter-based random number generation (CBRNG)
 // see Salmon, Moraes, Dror, Shaw (2011)
@@ -63,8 +62,7 @@ int main (int argc, char *argv[]) {
   long long1, long2;
   double *expmu, gvar, gvarl, esig;
   gsl_set_error_handler_off();          // !!! All GSL return messages MUST be checked !!!
-  std::string config_file_name;
-  bool use_redu_shear, use_shear;
+  bool use_shear;
 
   
   /**********************************************/
@@ -78,56 +76,12 @@ int main (int argc, char *argv[]) {
   cout << "FLASK commit:       " << FLASKCOMMIT << endl;
   cout << "Max. # of threads:  " << MaxThreads  << endl;
 
-  // Make sure a config/ini file is supplied:
-  if (argc<=1) { cout << "You must supply a config or ini file as the first command line argument." << endl; return 0;}
-
-// =============================================================
-// Deal with the input parameter file format.
-// -----------------------------------------
-  std::string binname = argv[0];             //The name of the executable file (this program)
-  std::string para_file_name = argv[1];      //The name of the input parameter file.
-
-  //Make sure only a .config or a .ini file is provided as input:
-  if(para_file_name.substr(para_file_name.find_last_of(".") + 1) != "ini" && 
-    para_file_name.substr(para_file_name.find_last_of(".") + 1) != "config") {
-      cout << "Only input filenames with .config or .ini extensions can be processed." << endl; return 0;
-  }
-
-  //If the input file type is .ini then convert it to .cfg format.
-  //This also includes creation of any new directory names encountered in the .ini file.
-  if(para_file_name.substr(para_file_name.find_last_of(".") + 1) == "ini") {
-    cout << " " << endl;
-    cout << "Input parameter file appears to be a .ini file" << endl;
-    cout << "Converting it to config (.cfg) format" << endl;
-    cout << " " << endl;
-
-    //Create a corresponding config (.cfg) file:
-    ini_to_config(binname, para_file_name);
-
-    // Now replace the argv[1] element with the new (directory + input filename) combination...
-    strcpy(argv[1], config_dir_and_file.c_str());
-  }                                           //Close the option applicable to .ini file
-
-  //If the input file type is .config then create any new directory names mentioned in it.
-  if(para_file_name.substr(para_file_name.find_last_of(".") + 1) == "config") {
-    cout << " " << endl;
-    cout << "Input parameter file appears to be a .config file" << endl;
-    cout << " " << endl;
-
-    config_mkdir(para_file_name);
-  }                                           //Close the option applicable to .config file
-
-  cout << "Input parameter file that Flask is going to work with internally: " << argv[1] << endl;
-  cout << " " << endl;
-// =============================================================
-
-
-  config_file_name = argv[1];
+  // Loading config file:
+  if (argc<=1) { cout << "You must supply a config file." << endl; return 0;}
   config.load(argv[1]);
-  //config.load(config_file_name.c_str());
   cout << endl;
   cout << "-- Configuration setup:\n";
-  cout << "   File: "<<config_file_name<<endl;
+  cout << "   File: "<<argv[1]<<endl;
   config.lineload(argc, argv);
   config.show();
   cout << endl;
@@ -785,12 +739,11 @@ int main (int argc, char *argv[]) {
   /*** Ellipticity fields ***/
   const double dw = 1.4851066049791e8/npixels; // Pixel solid angle in arcmin^2
   
-  // Read from the CONFIG file whether shear or reduced shear is to be used for calculating the observed ellipticities:
-  use_redu_shear = true; use_shear = false;                     // Default values
-  if (stringexist(config_file_name, "REDUCED_SHEAR:")) {        // Check if the keyword for reduced shear exists in the config file
-    if (config.readi("REDUCED_SHEAR")==1) {use_redu_shear = true; use_shear = false;}    // If it exists, read its value and decide whether shear or reduced shear is to be used
-    else if (config.readi("REDUCED_SHEAR")==0) {use_redu_shear = false; use_shear = true;}
-  }
+  // Read from config whether shear or reduced shear is to be used for calculating the observed ellipticities:
+  if (config.readi("REDUCED_SHEAR") == 0)
+      use_shear = true;
+  else
+      use_shear = false;
 
   if (config.reads("ELLIP_MAP_OUT")!="0" || config.reads("ELLIPFITS_PREFIX")!="0") {
     Healpix_Map <MAP_PRECISION> *e1Mapf, *e2Mapf;
@@ -960,13 +913,16 @@ int main (int argc, char *argv[]) {
   
   // Using transposed catalog (catalog[col][row]), better for FITS outputting:
   CatalogItems  = config.reads("CATALOG_COLS");
-  CatalogHeader = CatalogItems;                   // The default header if a custom header is not present
-  if (stringexist(config_file_name, "CAT_COL_NAMES:")) CatalogHeader = config.reads("CAT_COL_NAMES");
+  if(config.reads("CAT_COL_NAMES").empty())
+    CatalogHeader = CatalogItems;
+  else
+    CatalogHeader = config.reads("CAT_COL_NAMES");
 
-  //Decide if the floating point numbers to be written in the catalogue are to be in 64-bit (default) or 32-bit format:
-  if (stringexist(config_file_name, "CAT32BIT:")) {        // Check if the keyword for overriding the 64-bit floating point output in binary FITS catalogue exists in the config file
-    if (config.readi("CAT32BIT")==1) float32bit = true;    // If it exists, read its value and decide whether 32-bit floating points are to be written in the binary catalogue
-  }
+  // Read single or double precision
+  if(config.readi("CAT32BIT") == 0)
+    float32bit = false;
+  else
+    float32bit = true;
 
   ncols         = CountWords(CatalogItems);
   catalog       = matrix<CAT_PRECISION>(0,ncols-1, 0,Ngalaxies-1); 

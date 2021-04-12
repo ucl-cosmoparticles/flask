@@ -6,6 +6,7 @@ in ParameterList.hpp.
 #include <iostream>  // standard I/O
 #include <fstream>   // file I/O
 #include <cstring>   // to use strcpy();
+#include <limits>
 
 #include "ParameterList.hpp"
 #include "Utilities.hpp"
@@ -160,93 +161,6 @@ std::string ParameterList::reads(std::string name) const {
 }
 
 
-// Copy parameter int value to int variable.
-void ParameterList::copy (int index, long *value) const {
-  using namespace ParDef;
-  char message[100];
-  if (index >=npars) // Error in case index does not exist.
-    {sprintf(message,"ParameterList::copy<id,int>: unkown index %d.",index); error (message);}
-  switch (list[index].type) {
-  case i1:
-    (*value)=list[index].value.inum;
-    break;
-  case i2:
-    value[0]=list[index].value.ivec[0];
-    value[1]=list[index].value.ivec[1];
-    break;
-  case i3:
-    value[0]=list[index].value.ivec[0];
-    value[1]=list[index].value.ivec[1];
-    value[2]=list[index].value.ivec[2];
-    break;
-  default:
-    error("ParameterList::copy<id,int>: not prepared for type "+typelabel[list[index].type]);
-  }
-}
-void ParameterList::copy (std::string name, long *value) const {
-  int index;
-  index = findpar(name+":");
-  if (index < 0) error ("ParameterList::copy<name,int>: cannot find parameter "+name+".");
-  copy(index, value);
-}
-// Copy parameter double value to double variable.
-void ParameterList::copy (int index, double *value) const {
-  using namespace ParDef;
-  char message[100]; 
-  if (index >=npars) // Error in case index does not exist.
-    {sprintf(message,"ParameterList::copy<id,double>: unkown index %d.",index); error (message);}
-  switch (list[index].type) {
-  case d1:
-    (*value)=list[index].value.dnum;
-    break;
-  case d2:
-    value[0]=list[index].value.dvec[0];
-    value[1]=list[index].value.dvec[1];
-    break;
-  case d3:
-    value[0]=list[index].value.dvec[0];
-    value[1]=list[index].value.dvec[1];
-    value[2]=list[index].value.dvec[2];
-    break;
-  default:
-    error("ParameterList::copy<id,double>: not prepared for type "+typelabel[list[index].type]);
-  }
-}
-void ParameterList::copy (std::string name, double *value) const {
-  int index;
-  index = findpar(name+":");
-  if (index < 0) error ("ParameterList::copy<name,double>: cannot find parameter "+name+".");
-  copy(index, value);
-}
-
-
-// Copy parameter char value to char variable.
-void ParameterList::copy (int index, char *value) const {
-  using namespace ParDef;
-  char message[100]; 
-  if (index >=npars) // Error in case index does not exist.
-    {sprintf(message,"ParameterList::copy<id,char>: unkown index %d.",index); error (message);} 
-  switch (list[index].type) {
-  case c:
-    (*value)=list[index].value.cnum;
-    break;
-  case s:
-    int i;
-    for(i=0; list[index].value.cvec[i]!='\0'; i++) value[i]=list[index].value.cvec[i];  
-    value[i]='\0';
-    break;
-  default:
-    error("ParameterList::copy<id,char>: not prepared for type "+typelabel[list[index].type]);
-  }
-}
-void ParameterList::copy (std::string name, char *value) const {
-  int index;
-  index = findpar(name+":");
-  if (index < 0) error ("ParameterList::copy<name,char>: cannot find parameter "+name+".");
-  copy(index, value);
-}
-
-
 // Read parameters from file.
 void ParameterList::load (const char *filename) {
   using std::ifstream;
@@ -255,12 +169,32 @@ void ParameterList::load (const char *filename) {
   ifstream parfile;
   string word;
   int index;
+  char delim, comment;
+
+  if(std::strlen(filename) > 4 && std::strcmp(filename + (std::strlen(filename)-4), ".ini") == 0)
+  {
+    delim = '=';
+    comment = ';';
+  }
+  else
+  {
+    delim = ':';
+    comment = '#';
+  }
+
   parfile.open(filename);
   if (!parfile.is_open()) error("ParameterList::load: cannot open file.");
   
   parloaded=0;
   while (parfile >> word) {
-    if (word[word.size()-1] == ':') {
+    // skip comments until the end of line
+    if(word[0] == comment)
+    {
+      parfile.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      continue;
+    }
+
+    if (word[word.size()-1] == delim) {
       index=findpar(word);          // Lookup parameter in 'ParDef' namespace and get its index.
       if (index>=0) {
 	parloaded++;

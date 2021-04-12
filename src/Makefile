@@ -184,15 +184,13 @@ $(BIN)/flask: $(OBJ)/flask.o $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
 			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
 			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
 			$(OBJ)/ClProcessing.o $(OBJ)/Maximize.o $(OBJ)/fitsfunctions.o \
-			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
-			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o
+			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o
 	$(COMP) $(LDHEAL) $(LDFITS) $(LDGSL) $(OBJ)/flask.o $(OBJ)/ParameterList.o $(OBJ)/Utilities.o \
 			$(OBJ)/gsl_aux.o $(OBJ)/interpol.o \
 			$(OBJ)/flask_aux.o $(OBJ)/Cosmology.o $(OBJ)/Integral.o \
 			$(OBJ)/GeneralOutput.o $(OBJ)/SelectionFunc.o $(OBJ)/RegularizeCov.o \
 			$(OBJ)/ClProcessing.o $(OBJ)/Maximize.o $(OBJ)/fitsfunctions.o \
-			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o \
-			$(OBJ)/ini_config.o $(OBJ)/handle_ini_format.o -o $@ $(LIBS)
+			$(OBJ)/lognormal.o $(OBJ)/FieldsDatabase.o $(OBJ)/Spline.o -o $@ $(LIBS)
 
 # Objects:
 
@@ -270,9 +268,3 @@ $(OBJ)/interpol.o: $(SRC)/interpol.cpp $(SRC)/interpol.hpp
 
 $(OBJ)/Maximize.o: $(SRC)/Maximize.cpp $(SRC)/Maximize.hpp $(SRC)/interpol.hpp
 	$(COMP) -fpic -c $(SRC)/Maximize.cpp -o $@
-
-$(OBJ)/ini_config.o: $(SRC)/ini_config.cpp $(SRC)/ini_config.hpp $(SRC)/handle_ini_format.hpp
-	$(COMP) -fpic -c $(SRC)/ini_config.cpp -o $@
-
-$(OBJ)/handle_ini_format.o: $(SRC)/handle_ini_format.cpp $(SRC)/handle_ini_format.hpp
-	$(COMP) -fpic -c $(SRC)/handle_ini_format.cpp -o $@
