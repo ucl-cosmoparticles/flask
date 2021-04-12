@@ -83,12 +83,6 @@ public:
   void load (const char *filename);
   void lineload (int argc, char *argv[]);
   void show (std::ostream * output = &std::cout) const;
-  void copy (int par_index, long *value) const;
-  void copy (int par_index, double *value) const;
-  void copy (int par_index, char *value) const;
-  void copy (std::string par_name, long *value) const;
-  void copy (std::string par_name, double *value) const;
-  void copy (std::string par_name, char *value) const;
   int readi (int par_index, int vec_pos = -1) const;
   int readi (std::string par_name, int vec_pos = -1) const;
   double readd (int par_index, int vec_pos = -1) const;
