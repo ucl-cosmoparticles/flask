@@ -2,8 +2,6 @@
 #include "Utilities.hpp"
 #include "flask_aux.hpp" // For definitions namespace and n2fz function.
 #include <healpix_map_fitsio.h>
-#include "interpol.hpp"
-#include "Maximize.hpp"
 
 //using std::cout; using std::endl;
 
@@ -263,32 +261,6 @@ int SelectionFunction::Scheme() const {
 }
 
 
-// Returns random redshift for a field-redshift-bin 'fz' and pixel 'pix' according to the selection function:
-// 'zSearchTol' is the tolerance for z position when looking for the Selection function maximum.
-double SelectionFunction::RandRedshift(gsl_rng *r, int fz, int pix) {
-  double ymax, yguess, zguess, zBinSize;
-
-  zBinSize = fieldZrange[fz][1] - fieldZrange[fz][0];
-
-  if (Separable==0) { // We should interpolate between selection function in the same pixel.
-    error("SelectionFunction.RandRedshift: not yet implemented for non-separable selection functions.");
-  }
-  
-  else if (Separable==1 || Separable==2) {
-    
-    ymax = MaxInterp(fieldZrange[fz][0], fieldZrange[fz][1], zSearchTol, 
-		     zEntries[tracerIndex[fz]], NzEntries[tracerIndex[fz]], zSel[tracerIndex[fz]]);
-    do {
-    zguess = fieldZrange[fz][0] + gsl_rng_uniform(r)*zBinSize;
-    yguess = gsl_rng_uniform(r)*ymax;
-    } while (yguess > Interpol(zEntries[tracerIndex[fz]], NzEntries[tracerIndex[fz]], zSel[tracerIndex[fz]], zguess));
-
-  }
-
-  return zguess;
-}
-
-
 // Destructor:
 SelectionFunction::~SelectionFunction() {
   using namespace definitions;
@@ -372,7 +344,7 @@ int SelectionFunction::MaskBit(int fz, int pix) const {
 
 
 // Returns the selection function for the field (or redshift) fz and the angular position pix:
-double SelectionFunction::operator()(int fz, int pix) {
+double SelectionFunction::operator()(int fz, int pix) const {
   using namespace definitions;
   double z0, zSelInterp, StarValue, AngularValue;
 
