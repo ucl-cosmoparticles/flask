@@ -28,11 +28,18 @@
 
 #define RAND_OFFSET 10000000  // For generating random numbers in parallel, add multiples of this to seed.
 
+// rename main() to flask() when compiling as a module
+#ifdef FLASK_MODULE
+#define FLASK_MAIN flask
+#else
+#define FLASK_MAIN main
+#endif
+
 
 /********************/
 /*** Main Program ***/
 /********************/
-int main (int argc, char *argv[]) {
+int FLASK_MAIN (int argc, char *argv[]) {
   using std::cout; using std::endl;                     // Basic stuff.
   using namespace definitions;                          // Global definitions.
   using namespace ParDef; ParameterList config;         // Easy configuration file use.
