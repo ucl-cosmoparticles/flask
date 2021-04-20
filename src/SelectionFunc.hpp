@@ -30,7 +30,4 @@ public:
   ~SelectionFunction();
 };
 
-
-// Other functions, not members but related:
-void SelectionMemTest1(const ParameterList & config, int *ftype0, double **fzrange, int N10, int N20);
 #endif

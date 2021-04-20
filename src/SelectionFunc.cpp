@@ -410,13 +410,3 @@ double SelectionFunction::operator()(int fz, int pix) {
   // multiply integral of radial to the specific angular part:
   else if (Separable==2) return Scale * intZsel[fz] * StarValue * AngularSel[tracerIndex[fz]][pix];
 }
-
-
-// Function to test for memory leackage by loading and unloading selection functions:
-void SelectionMemTest1(const ParameterList & config, const FZdatabase & fieldlist) {
-  SelectionFunction test;
-
-  // Load Selection function to allocate memory:
-  test.load(config, fieldlist);
-  // Destructor should be called when exiting this function.
-}

@@ -18,7 +18,6 @@
 void OrganizeAngularCoord(int *AngularCoord, int *phi_pos, int *theta_pos, int *ra_pos, int *dec_pos, std::string & Header);
 int CountLensingFields(const FZdatabase & fieldlist);
 int CountGalaxyFields(const FZdatabase & fieldlist);
-void TabulateKappaWeight(double **KappaWeightTable, const Cosmology & cosmo, const FZdatabase & fieldlist);
 void ChangeCoord(CAT_PRECISION **catalog, int theta_pos, int phi_pos, long Ngalaxies, int coordtype);
 bool ComputeShearQ(const ParameterList & config);
 double MapMean(const Healpix_Map<MAP_PRECISION> & map);
@@ -37,23 +36,13 @@ int FileFormat(std::string);
 int CountWords(const std::string header);
 int GetSubstrPos(const std::string field, const std::string header);
 void CatalogFill(CAT_PRECISION **catalog, long row, int column, double value, char **catSet);
-void CatalogFill(CAT_PRECISION **catalog, long row, int column, double value);
 void Kappa2ShearEmode(Alm<xcomplex <ALM_PRECISION> > &Elm, Alm<xcomplex <ALM_PRECISION> > &Klm);
 void GenEllip(gsl_rng *r, double sigma, double kappa, double gamma1, double gamma2, double *eps1, double *eps2, bool use_shear);
 pointing RandAngInPix(gsl_rng *r, const Healpix_Map<MAP_PRECISION> & map, int pixel);
 pointing randang(gsl_rng *r, double thetamin, double thetamax, double phimin, double phimax);
 pointing xyz2ang(const vec3 & cartesian);
-vec3 VecInRotBasis(const pointing & ang, const vec3 & orig);
-double RandRedshift0(gsl_rng *r, double zmin, double zmax);
 double ran_redshift(gsl_rng *r, double zmin, double zmax, Cosmology *p);
 void CorrGauss(double **gaus1, gsl_matrix *L, double **gaus0);
-int getll(const std::string filename);
-std::string getllstr(const std::string filename);
-void fz2n (int a1, int a2, int *n, int N1, int N2);
-void n2fz (int n, int *a1, int *a2, int N1, int N2);
-void fzfz2ij (int a1, int a2, int b1, int b2, int *i, int *j, int N1, int N2); // Not used by 08-jan-2015.
-void ij2fzfz (int i, int j, int *a1, int *a2, int *b1, int *b2, int N1, int N2); // Not used by 08-jan-2015.
-void test_fzij (int N1, int N2);
 
 
 // Template definitions
