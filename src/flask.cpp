@@ -45,7 +45,7 @@ int main (int argc, char *argv[]) {
   std::string filename, ExitAt;
   std::ofstream outfile;                                // File for output.
   simtype dist;                                         // For specifying simulation type.
-  bool suppressVar;                                     // Fields with suppressed variance.
+  int suppressVar;                                      // Fields with suppressed variance.
   gsl_matrix **CovByl; 
   int status, i, j, k, l, m, Nf, Nz, f, z, Nfields, Nls, MaxThreads;
   long long1, long2;
@@ -91,6 +91,8 @@ int main (int argc, char *argv[]) {
   else error("flask: unknown DIST: "+config.reads("DIST"));
   // - Suppress variance:
   suppressVar = config.readi("SUPPRESS_VAR");
+  if(suppressVar < 0 || suppressVar > 2)
+      error("flask: SUPPRESS_VAR must be 0, 1, 2");
  
 
   /***********************************/
@@ -105,6 +107,10 @@ int main (int argc, char *argv[]) {
   Nf      = fieldlist.Nfs();
   Nz      = fieldlist.Nzs();
   cout << "Infered from FIELDS_INFO file:  Nf = " << Nf << "   Nz = " << Nz << endl;
+
+  // suppressed cross-covariance only works with two fields
+  if(suppressVar == 2 && Nfields != 2)
+      error("flask: SUPPRESS_VAR: value 2 only works with two fields");
 
 
   /**************************************************************/
@@ -136,7 +142,7 @@ int main (int argc, char *argv[]) {
       cout << "Will use "<<lmin<<" <= l <= "<<lmax<<endl;
 
       // Modify covariance matrices if suppressing variance
-      if (suppressVar) {
+      if (suppressVar == 1) {
         Announce("Update cov. matrices for suppressed variance... ");
         for (l=lmin; l<=lmax; l++) {
             suppressed_cov_matrix(Nfields, CovByl[l]->data);
@@ -292,8 +298,7 @@ int main (int argc, char *argv[]) {
       CorrGauss(gaus1[k], CovByl[l], gaus0[k]);
   
       // Suppress variance if requested
-      if(suppressVar) {
-
+      if(suppressVar == 1) {
           for (i=0; i<Nfields; i++) {
             // normalise
             const double norm = hypot(gaus1[k][i][0], gaus1[k][i][1]);
@@ -310,6 +315,32 @@ int main (int argc, char *argv[]) {
             gaus1[k][i][0] *= scale;
             gaus1[k][i][1] *= scale;
         }
+      }
+      else if (suppressVar == 2) {
+        // keep a random sgn around for later
+        const double sgnz = copysign(1., gaus1[k][1][0]);
+
+        // compute sqrt(Cl) and R from Cholesky decomposition
+        const double sqrCl0 = CovByl[l]->data[0];
+        const double sqrCl1 = hypot(CovByl[l]->data[3], CovByl[l]->data[2]);
+        const double R = CovByl[l]->data[2]/sqrCl1;
+        const double sgnR = copysign(1., R);
+
+        // normalise and fix phases
+        const double norm = hypot(gaus1[k][0][0], gaus1[k][0][1]);
+        gaus1[k][0][0] /= norm;
+        gaus1[k][0][1] /= norm;
+        gaus1[k][1][0] = gaus1[k][0][0] * sgnR;
+        gaus1[k][1][1] = gaus1[k][0][1] * sgnR;
+
+        // extra random factor for fields
+        const double z0 = sqrt(1 + sgnz*sqrt(1 - R*R));
+        const double z1 = sqrt(1 - sgnz*sqrt(1 - R*R));
+
+        gaus1[k][0][0] *= z0*sqrCl0;
+        gaus1[k][0][1] *= z0*sqrCl0;
+        gaus1[k][1][0] *= z1*sqrCl1;
+        gaus1[k][1][1] *= z1*sqrCl1;
       }
 
       // Save alm to tensor:
