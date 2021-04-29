@@ -32,14 +32,10 @@ void GeneralOutput(Alm<xcomplex <ALM_PRECISION> > *af, const ParameterList & con
 		   const FZdatabase & fieldlist, bool inform = 1);
 // One alm in one table, named with a prefix and the field ID:
 void GeneralOutput(const Alm<xcomplex <ALM_PRECISION> > & a, const ParameterList & config, std::string keyword, int f, int z, bool inform = 1);
-// One alm in one table, names with a keyword:
-void GeneralOutput(const Alm<xcomplex <ALM_PRECISION> > & a, const ParameterList & config, std::string keyword, bool inform = 1);
 
 
 /*** Healpix map output ***/
 
-// Prints one single map to FITS file based on a PREFIX and a FIELD ID:
-void GeneralOutput(const Healpix_Map<MAP_PRECISION> & map, const ParameterList & config, std::string keyword, int *fnz, bool inform = 1);
 // Prints a list of maps to a single TEXT file:
 void GeneralOutput(Healpix_Map<MAP_PRECISION> *mapf, const ParameterList & config, std::string keyword, 
 		   const FZdatabase & fieldlist, bool fits=0, bool inform = 1);
@@ -50,10 +46,5 @@ void GeneralOutput(Healpix_Map<MAP_PRECISION> *gamma1, Healpix_Map<MAP_PRECISION
 void GeneralOutput(const Healpix_Map<MAP_PRECISION> & kmap, const Healpix_Map<MAP_PRECISION> & g1map, 
 		   const Healpix_Map<MAP_PRECISION> & g2map, const ParameterList & config, std::string keyword, 
 		   int f, int z, bool inform = 1);
-// One set of (Kappa, gamma1, gamma2) maps to one FITS file, named with a keyword:
-void GeneralOutput(const Healpix_Map<MAP_PRECISION> & kmap, const Healpix_Map<MAP_PRECISION> & g1map, 
-		   const Healpix_Map<MAP_PRECISION> & g2map, const ParameterList & config, std::string keyword, bool inform = 1);
-// One single map to one FITS file, named with a keyword:
-void GeneralOutput(const Healpix_Map<MAP_PRECISION> & map, const ParameterList & config, std::string keyword, bool inform = 1);
 
 #endif

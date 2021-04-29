@@ -265,67 +265,6 @@ void GeneralOutput(const Alm<xcomplex <ALM_PRECISION> > & a, const ParameterList
 }
 
 
-
-// Prints one single alm table to a TEXT file.
-void GeneralOutput(const Alm<xcomplex <ALM_PRECISION> > & a, const ParameterList & config, std::string keyword, bool inform) {
-  std::string filename;
-  std::ofstream outfile; 
-  int lminout, lmaxout, mmax, l, m;
-
-  // If requested, write alm's to file:
-  if (config.reads(keyword)!="0") {
-    filename = config.reads(keyword);
-    outfile.open(filename.c_str());
-    if (!outfile.is_open()) warning("GeneralOutput: cannot open "+filename+" file.");
-    outfile << "# l, m, Re(alm), Im(alm)"<<std::endl<<std::endl;
-    
-    // Check if output bounds are correct:
-    lminout = config.readi("LRANGE_OUT", 0);
-    lmaxout = config.readi("LRANGE_OUT", 1);
-    if (lmaxout > a.Lmax()) { 
-      lmaxout = a.Lmax(); 
-      warning("GeneralOutput: LRANGE_OUT beyond available data, will use the latter instead.");
-    }
-    if (lminout < config.readi("LRANGE", 0)) { 
-      lminout = config.readi("LRANGE", 0); 
-      warning("GeneralOutput: LRANGE_OUT beyond LRANGE lower bound, will use the latter instead.");
-    }
-    mmax = config.readi("MMAX_OUT");
-    if (mmax>lminout) error ("GeneralOutput: current code only allows MMAX_OUT <= LRANGE_OUT lower bound.");
-
-    // Output all alm's:
-    if (mmax<0) {
-      for(l=lminout; l<=lmaxout; l++)
-	for(m=0; m<=l; m++) {
-	  outfile << l <<" "<< m;
-#if USEXCOMPLEX
-	  outfile <<" "<<std::setprecision(10)<< a(l,m).re<<" "<<std::setprecision(10)<< a(l,m).im;
-#else
-	  outfile <<" "<<std::setprecision(10)<< a(l,m).real()<<" "<<std::setprecision(10)<< a(l,m).imag();
-#endif
-	  outfile<<std::endl;
-	} 
-    }
-    // Truncate m in alm output:
-    else {
-     for(l=lminout; l<=lmaxout; l++)
-	for(m=0; m<=mmax; m++) {
-	  outfile << l <<" "<< m;
-#if USEXCOMPLEX
-	  outfile <<" "<<std::setprecision(10)<< a(l,m).re<<" "<<std::setprecision(10)<< a(l,m).im;
-#else
-	  outfile <<" "<<std::setprecision(10)<< a(l,m).real()<<" "<<std::setprecision(10)<< a(l,m).imag();
-#endif
-	  outfile<<std::endl;
-	}  
-    }
-    outfile.close();
-    if(inform==1) std::cout << ">> "+keyword+" written to "+filename<<std::endl;
-  }
-}
-
-
-
 /********************/
 /*** Maps output  ***/
 /********************/
@@ -515,42 +454,6 @@ void GeneralOutput(Healpix_Map<MAP_PRECISION> *gamma1, Healpix_Map<MAP_PRECISION
 }
 
 
-// Prints one single map to FITS file based on a PREFIX and a FIELD ID:
-void GeneralOutput(const Healpix_Map<MAP_PRECISION> & map, const ParameterList & config, std::string keyword, int *fnz, bool inform) {
-  std::string filename, tgafile;
-  char *arg[4];
-  char message1[100], message2[100];
-  char opt1[]="-bar";
-  if (config.reads(keyword)!="0") {
-    sprintf(message1, "%sf%dz%d.fits", config.reads(keyword).c_str(), fnz[0], fnz[1]);
-    filename.assign(message1);
-
-    // Write to FITS:
-    write_Healpix_map_to_fits("!"+filename, map, planckType<MAP_PRECISION>()); // Filename prefixed by ! to overwrite.
-    if(inform==1) std::cout << ">> "<<keyword<<" written to "<<filename<<std::endl;
-    // Write to TGA if requested:
-    if (config.readi("FITS2TGA")==1 || config.readi("FITS2TGA")==2) {
-#if USEMAP2TGA
-      tgafile = filename;
-      tgafile.replace(tgafile.find(".fits"),5,".tga");
-      sprintf(message1, "%s", filename.c_str());
-      sprintf(message2, "%s", tgafile.c_str());
-      arg[1]=message1; arg[2]=message2; arg[3]=opt1;
-      map2tga_module(4, (const char **)arg);
-      if(inform==1) std::cout << ">> "<<keyword<<" written to "<<tgafile<<std::endl;
-      if (config.readi("FITS2TGA")==2) {
-	sprintf(message2, "rm -f %s", message1);
-	system(message2);
-	if(inform==1) std::cout << "-- "<<filename<<" file removed."<<std::endl;
-      }
-#else
-      warning("Using FITS format (TGA format only available for Healpix version < 3.60).");
-#endif
-    }
-  } 
-}
-
-
 // Prints one single combination of kappa, gamma1 and gamma2 maps to FITS file based on a PREFIX and a FIELD ID:
 void GeneralOutput(const Healpix_Map<MAP_PRECISION> & kmap, const Healpix_Map<MAP_PRECISION> & g1map, 
 		   const Healpix_Map<MAP_PRECISION> & g2map, const ParameterList & config, std::string keyword, int f, int z, bool inform) {
@@ -579,78 +482,6 @@ void GeneralOutput(const Healpix_Map<MAP_PRECISION> & kmap, const Healpix_Map<MA
 	sprintf(message2, "rm -f %s", message1);
 	system(message2);
 	if(inform==1) std::cout << "-- "<<filename<<" file removed."<<std::endl;
-      }
-#else
-      warning("Using FITS format (TGA format only available for Healpix version < 3.60).");
-#endif
-    }
-  } 
-}
-
-
-// Prints one single combination of kappa, gamma1 and gamma2 maps to FITS file.
-void GeneralOutput(const Healpix_Map<MAP_PRECISION> & kmap, const Healpix_Map<MAP_PRECISION> & g1map, 
-		   const Healpix_Map<MAP_PRECISION> & g2map, const ParameterList & config, std::string keyword, bool inform) {
-  std::string filename, tgafile;
-  char *arg[4];
-  char message1[100], message2[100];
-  char opt1[]="-bar";
-  if (config.reads(keyword)!="0") {
-    // Write to FITS:
-    filename=config.reads(keyword); 
-    //sprintf(message1, "rm -f %s", filename.c_str());
-    //system(message1); // Have to delete previous fits files first.
-    write_Healpix_map_to_fits("!"+filename, kmap, g1map, g2map, planckType<MAP_PRECISION>()); // Filename prefixed by ! to overwrite.
-    if(inform==1) std::cout << ">> "<<keyword<<" written to "<<filename<<std::endl;
-    // Write to TGA if requested:
-    if (config.readi("FITS2TGA")==1 || config.readi("FITS2TGA")==2) {
-#if USEMAP2TGA
-      tgafile = filename;
-      tgafile.replace(tgafile.find(".fits"),5,".tga");
-      sprintf(message1, "%s", filename.c_str());
-      sprintf(message2, "%s", tgafile.c_str());
-      arg[1]=message1; arg[2]=message2; arg[3]=opt1;
-      map2tga_module(4, (const char **)arg);
-      if(inform==1) std::cout << ">> "<<keyword<<" written to "<<tgafile<<std::endl;
-      if (config.readi("FITS2TGA")==2) {
-	sprintf(message2, "rm -f %s", message1);
-	system(message2);
-	if(inform==1) std::cout << "-- "<<keyword<<" FITS file removed."<<std::endl;
-      }
-#else
-      warning("Using FITS format (TGA format only available for Healpix version < 3.60).");
-#endif
-    }
-  } 
-}
-
-
-// Prints one single map to FITS and/or TGA file.
-void GeneralOutput(const Healpix_Map<MAP_PRECISION> & map, const ParameterList & config, std::string keyword, bool inform) {
-  std::string filename, tgafile;
-  char *arg[4];
-  char message1[100], message2[100];
-  char opt1[]="-bar";
-
-  if (config.reads(keyword)!="0") {
-    // Write to FITS:
-    filename=config.reads(keyword); 
-    write_Healpix_map_to_fits("!"+filename, map, planckType<MAP_PRECISION>()); // Filename prefixed by ! to overwrite.
-    if(inform==1) std::cout << ">> "<<keyword<<" written to "<<filename<<std::endl;
-    // Write to TGA if requested:
-    if (config.readi("FITS2TGA")==1 || config.readi("FITS2TGA")==2) {
-#if USEMAP2TGA
-      tgafile = filename;
-      tgafile.replace(tgafile.find(".fits"),5,".tga");
-      sprintf(message1, "%s", filename.c_str());
-      sprintf(message2, "%s", tgafile.c_str());
-      arg[1]=message1; arg[2]=message2; arg[3]=opt1;
-      map2tga_module(4, (const char **)arg);
-      if(inform==1) std::cout << ">> "<<keyword<<" written to "<<tgafile<<std::endl;
-      if (config.readi("FITS2TGA")==2) {
-	sprintf(message2, "rm -f %s", message1);
-	system(message2);
-	if(inform==1) std::cout << "-- "<<keyword<<" FITS file removed."<<std::endl;
       }
 #else
       warning("Using FITS format (TGA format only available for Healpix version < 3.60).");

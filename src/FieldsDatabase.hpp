@@ -31,8 +31,6 @@ private:
 public:
   // Structural functions:
   FZdatabase();
-  FZdatabase(const std::string & filename);
-  FZdatabase(int *fullF0, int *fullZ0, int Nfield0, int *ftype0, double **zrange0, double *mean0, double *shift0);
   void Load(const std::string & filename);
   void Build(int *fullF0, int *fullZ0, int Nfield0, int *ftype0, double **zrange0, double *mean0, double *shift0);
   ~FZdatabase();
@@ -47,10 +45,8 @@ public:
   int  fFixedIndex(int fi, int zi, int *n=NULL) const; // To loop inside a fixed field.
   // Field name functions:
   void Index2fFixed(int n, int *fi, int *zi) const;
-  void Index2zFixed(int n, int *fi, int *zi) const;
   int  Name2Index(int fName, int zName, int *n=NULL, bool warn=1) const;
   void Index2Name(int n,          int *fName, int *zName) const;
-  void zFixedName(int fi, int zi, int *fName, int *zName) const;
   void fFixedName(int fi, int zi, int *fName, int *zName) const;
   // Field info functions:
   double mean(int n)  const;

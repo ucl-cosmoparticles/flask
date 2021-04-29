@@ -55,31 +55,6 @@ void Cosmology::SetOther() {
   }
 }
 
-void Cosmology::show (std::ostream * output) {
-  if (output!=&std::cout) warning("Cosmology::show: output to file not implemented.");
-
-  printf("%10s %10g %50s\n", "Om:",Om,"DM+barions+massive neutrinos density parameter.");
-  printf("%10s %10g %50s\n", "Ob:",Ob,"Barion density parameter.");
-  printf("%10s %10.3g %50s\n", "Onu:",Onu,"Massive neutrino density parameter.");
-  printf("%10s %10g %50s\n", "Ode:",Ode,"Dark energy density parameter.");
-  printf("%10s %10g %50s\n", "Omh2:",Omh2,"Total matter density parameter times h^2.");
-  printf("%10s %10g %50s\n", "Obh2:",Obh2,"Barion density parameter times h^2.");
-  printf("%10s %10g %50s\n", "Onuh2:",Onuh2,"Massive neutrino density parameter times h^2.");
-  printf("%10s %10g %50s\n", "Odeh2:",Odeh2,"Dark energy density parameter times h^2.");
-  printf("%10s %10g %50s\n", "Ok:",Ok,"Curvature density parameter.");
-  printf("%10s %10g %50s\n", "wde:",wde,"Dark energy equation of state.");
-  printf("%10s %10d %50s\n", "Nnu:",Nnu,"Number of massive species of neutrinos.");
-  printf("%10s %10g %50s\n", "deltaH2:",deltaH2,"Power spectrum normalization.");
-  printf("%10s %10g %50s\n", "ns:",ns,"Power spectrum index.");
-  printf("%10s %10g %50s\n", "Tcmb:", 2.728, "Hard-wired in WayneHuPowerClass.cpp.");
-  printf("%10s %10g %50s\n", "h:",h,"Hubble constant in units of 100km/s/Mpc.");
-  printf("%10s %10g %50s\n", "H100:",H100,"100 km/s/Mpc.");
-  printf("%10s %10g %50s\n", "c:",c,"Speed of light in km/s.");
-  printf("%10s %10d %50s\n", "curv:",curv,"Hard-wired, safe-guard DistCom function.");
-  printf("%10s %10d %50s\n", "lowz:",lowz,"Hard-wired, no implications.");
-  printf("%10s %10g %50s\n", "galdens:",galdens,"Galaxy comoving number density in (h^-1 Mpc)^-3.");
-}
-
 
 /*** Separate cosmological functions ***/
 
@@ -150,25 +125,4 @@ double KappaWeightByZ(const Cosmology & p, double z, double zsource) {
 
 double AvgKappaWeightByZ(const Cosmology & p, double zmin, double zmax, double zsource) {
   return qromb5(KappaWeightByZ, zmin, zmax, zsource, p)/(zmax-zmin);
-}
-
-
-// Redshift selection function for projection:
-double zSelection(double z, double z0) {
-  return 1.0;
-}
-double ProjDensityIntegrand(double z, double z0, const Cosmology & p) {
-  return zSelection(z,z0) * pow(ComDist(p,z),2) * dChidz(p,z);
-}
-double ProjDensityIntegrand(double z, const Cosmology & p) {
-  return pow(ComDist(p,z),2) * dChidz(p,z);
-}
-double ProjDensity(double z0, double zmin, double zmax, const Cosmology & p) {
-  return p.galdens * qromb(ProjDensityIntegrand, zmin, zmax, z0, p);
-}
-
-// It is the modulus squared of the fourier transform of a 3D Tophat function with normalization 1. 
-double TophatWk2(double kR) {
-  if (kR<0.001) return 1.0; // Error caused by this approximation should be less than 1e-6.
-  return 9.0*pow(sin(kR)-kR*cos(kR), 2)/pow(kR,6);
 }

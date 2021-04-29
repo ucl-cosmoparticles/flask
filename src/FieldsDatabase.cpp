@@ -91,20 +91,6 @@ FZdatabase::FZdatabase() {
 }
 
 
-// Constructor with input:
-FZdatabase::FZdatabase(int *fullF0, int *fullZ0, int Nfield0, int *ftype0, double **zrange0, double *mean0, double *shift0) {
-  Init(fullF0, fullZ0, Nfield0, ftype0, zrange0, mean0, shift0);
-}
-// Constructor with input:
-FZdatabase::FZdatabase(const std::string & filename) {
-  Nf        = 0;
-  Nz        = 0;
-  Nfield    = 0;   
-  inputClOrder = NULL;
-  Load(filename);
-}
-
-
 void FZdatabase::Load(const std::string & filename) {
   using namespace definitions;
   char message[200];
@@ -233,14 +219,6 @@ void FZdatabase::Index2fFixed(int n, int *fi, int *zi) const {
 }
 
 
-// Given a Field index 'n', returns the redshift index 'zi' and the field sub index 'fi':
-void FZdatabase::Index2zFixed(int n, int *fi, int *zi) const {
-  *fi = izsubf[n][1];
-  *zi = izsubf[n][0];
-}
-  
-
-
 // Return the index of the Field with z index 'zi' and f sub-index 'fi':
 // (This is for LOOPS over f with z fixed)
 int FZdatabase::zFixedIndex(int fi, int zi, int *n) const {
@@ -282,12 +260,6 @@ int FZdatabase::Name2Index(int fName, int zName, int *n, bool warn) const {
   if (warn) warning("FZdatabase.Name2Index: could not find requested field.");  
   if (n!=NULL) *n = failed;
   return failed;
-}
-
-
-// Return field NAME and redshift bin NAME for an z index 'zi' and f sub-index 'fi':
-void FZdatabase::zFixedName(int fi, int zi, int *fName, int *zName) const {
-  Index2Name(zFixedIndex(fi, zi), fName, zName);
 }
 
 

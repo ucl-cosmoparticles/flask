@@ -95,13 +95,12 @@ class build_flask(build_ext):
 
 setup(
     name='pyFlask',
-    package_dir={'': 'py'},
-    py_modules=['pyFlask'],
-    ext_modules=[Extension('_pyFlask',
+    ext_modules=[Extension('pyFlask',
         language='c++',
+        define_macros=[('FLASK_MODULE', None)],
         sources=[
-            'src/pyFlask_wrap.cxx',
             'src/pyFlask.cpp',
+            'src/flask.cpp',
             'src/ParameterList.cpp',
             'src/Utilities.cpp',
             'src/gsl_aux.cpp',
@@ -119,8 +118,6 @@ setup(
             'src/lognormal.cpp',
             'src/FieldsDatabase.cpp',
             'src/Spline.cpp',
-            'src/ini_config.cpp',
-            'src/handle_ini_format.cpp',
         ],
         extra_compile_args=[
             '-fopenmp',
