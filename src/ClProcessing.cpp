@@ -139,7 +139,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
 
   // Get list of the necessary C(l) files:
   prefix    = config.reads("CL_PREFIX"); 
-  if (prefix.substr(prefix.length()-4,4)==".dat") IsPrefix=false;
+  if (prefix.length()>=4 && prefix.substr(prefix.length()-4,4)==".dat") IsPrefix=false;
   else IsPrefix=true;
   
   // CASE 1 -- Cl prefixes:
@@ -373,7 +373,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
   filename = config.reads("SMOOTH_CL_PREFIX");
   if (filename!="0") {
     // Output one Cl per file, following the input Cls:
-    if (filename.substr(filename.length()-4,4)!=".dat") {
+    if (filename.length()>=4 && filename.substr(filename.length()-4,4)!=".dat") {
       for(i=0; i<Nfields; i++) for(j=0; j<Nfields; j++) if (IsSet[i][j]==1) {
 	    PrintOut(filename, i, j, fieldlist, ll[i][j], Cov[i][j], NentMat[i][j]);
 	  }
@@ -676,7 +676,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
     if (dist==lognormal) Announce("Computing regularized lognormal Cls... ");
     if (dist==gaussian)  Announce("Computing regularized Gaussian Cls... ");
     NCls = (Nfields*(Nfields+1))/2;
-    if (prefix.substr(prefix.length()-4,4)==".dat") {
+    if (prefix.length()>=4 && prefix.substr(prefix.length()-4,4)==".dat") {
       header = vector<std::string>(0, NCls);
       header[0].assign("l");
       auxMatrix  = matrix<double>(0,lastl, 0,NCls);
@@ -712,7 +712,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
       }
       
       // Output regularized Cls or prepare for output:
-      if (prefix.substr(prefix.length()-4,4)!=".dat") {
+      if (prefix.length()>=4 && prefix.substr(prefix.length()-4,4)!=".dat") {
 	filename=PrintOut(prefix, i, j, fieldlist, lls, tempCl, Nls);
       }
       else {
@@ -727,7 +727,7 @@ int ClProcess(gsl_matrix ***CovBylAddr, int *NlsOut, FZdatabase & fieldlist, con
     } // End of LOOP over fields. 
     Announce();
 
-    if (prefix.substr(prefix.length()-4,4)!=".dat") 
+    if (prefix.length()>=4 && prefix.substr(prefix.length()-4,4)!=".dat") 
       cout << ">> Regularized C(l)s written to prefix "+config.reads("REG_CL_PREFIX")<<endl;
     else {
       // Output Cls table to file:
