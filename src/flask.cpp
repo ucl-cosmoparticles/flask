@@ -271,13 +271,6 @@ int FLASK_MAIN (int argc, char *argv[]) {
     }
     Announce();
 
-    // potential sign flip for alm
-    double almsgn = 1.;
-    if (config.readi("FLIP_ALM")) {
-      almsgn = -1.;
-      cout << "will flip alm signs" << endl;
-    }
-
     // LOOP over l's and m's together:
     Announce("Generating auxiliary gaussian alm's... ");
     jmin = (lmin*(lmin+1))/2;
