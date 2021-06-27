@@ -346,10 +346,10 @@ int FLASK_MAIN (int argc, char *argv[]) {
       // Save alm to tensor:
       for (i=0; i<Nfields; i++) {
 #if USEXCOMPLEX // For compatibility with Healpix versions <=3.20 and >=v3.30.          
-	aflm[i](l,m).Set(almsgn*gaus1[k][i][0], almsgn*gaus1[k][i][1]);
+	aflm[i](l,m).Set(gaus1[k][i][0], gaus1[k][i][1]);
 #else
-	aflm[i](l,m).real(almsgn*gaus1[k][i][0]);
-	aflm[i](l,m).imag(almsgn*gaus1[k][i][1]);
+	aflm[i](l,m).real(gaus1[k][i][0]);
+	aflm[i](l,m).imag(gaus1[k][i][1]);
 #endif
       }   
       
